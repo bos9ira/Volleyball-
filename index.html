@@ -472,17 +472,71 @@ function render(){
   :"Статистика открыта для просмотра всем участникам.";
 }
 
+// Загрузка данных и восстановление составов старого матча.
 async function load(){
  status("Загружаем данные...");
+
  const {data:row,error}=await db.from("team_state")
   .select("payload").eq("id",1).maybeSingle();
- if(error){status("Ошибка загрузки: "+error.message);return;}
- if(!row){status("В базе не найдена запись id=1.");return;}
+
+ if(error){
+  status("Ошибка загрузки: "+error.message);
+  return;
+ }
+
+ if(!row){
+  status("В базе не найдена запись id=1.");
+  return;
+ }
+
  data=row.payload||{players:[],matches:[]};
+
  if(!Array.isArray(data.players))data.players=[];
  if(!Array.isArray(data.matches))data.matches=[];
+
+ let migrated=false;
+
+ // Ищем матч от 12 ноября 2026 года.
+ const oldMatch=data.matches.find(m=>
+  String(m.date||"").startsWith("2026-11-12")
+ );
+
+ if(oldMatch){
+
+  // Восстанавливаем красных, только если состав отсутствует.
+  if(!Array.isArray(oldMatch.redPlayers)||!oldMatch.redPlayers.length){
+   oldMatch.redPlayers=[
+    "Илья",
+    "Максим",
+    "Лена Крохина",
+    "Евгений Буданов",
+    "Марат Юсупов",
+    "Сергей Карташов"
+   ];
+   migrated=true;
+  }
+
+  // Восстанавливаем синих, только если состав отсутствует.
+  if(!Array.isArray(oldMatch.bluePlayers)||!oldMatch.bluePlayers.length){
+   oldMatch.bluePlayers=[
+    "Сергей Малявкин",
+    "Вова",
+    "Ксюша",
+    "Семён",
+    "Евгений Мойсук",
+    "Виталий"
+   ];
+   migrated=true;
+  }
+ }
+
  render();
  status("Данные успешно загружены.");
+
+ // Сохраняем восстановленные составы в базе, если вошёл администратор.
+ if(migrated&&isAdmin){
+  await save();
+ }
 }
 
 async function save(){
@@ -658,12 +712,14 @@ document.querySelectorAll(".tab").forEach(btn=>{
 async function start(){
  await refreshAuth();
  await load();
+
  db.channel("team-state-changes")
   .on("postgres_changes",
    {event:"UPDATE",schema:"public",table:"team_state"},
    async()=>{if(!busy)await load();}
   ).subscribe();
 }
+
 start();
 </script>
 </body>
