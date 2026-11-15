@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Volleyball Club | Team Stats</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 :root{
  --bg:#08111f;--panel:#111e31;--panel2:#17263c;
@@ -14,7 +15,7 @@
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
-button,input{font:inherit}
+button,input,select{font:inherit}
 button{cursor:pointer;border:0;border-radius:9px;padding:10px 14px;background:var(--blue);color:white;font-weight:700}
 button.secondary{background:#263750;color:#dce8fa}
 button.danger{background:#713342;color:#fff}
@@ -66,8 +67,8 @@ main{max-width:1100px;margin:25px auto;padding:0 16px}
 .avatar-edit{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
 .avatar-edit label{font-size:11px;color:var(--muted);display:block;margin-bottom:7px}
 .avatar-edit input{width:100%;font-size:11px;padding:7px}
-input{background:#091526;color:white;border:1px solid #354862;border-radius:8px;padding:10px;min-width:0}
-input:focus{outline:1px solid var(--blue)}
+input,select{background:#091526;color:white;border:1px solid #354862;border-radius:8px;padding:10px;min-width:0}
+input:focus,select:focus{outline:1px solid var(--blue)}
 input[type=number]{width:100%}
 input[type=checkbox]{accent-color:var(--green)}
 .search{width:100%;max-width:300px}
@@ -132,6 +133,21 @@ input[type=checkbox]{accent-color:var(--green)}
 .attendance-player{display:flex;align-items:center;gap:9px}
 .attendance-player img{width:32px;height:32px;border-radius:50%;object-fit:cover;background:#263750}
 .attendance-player .mini-avatar{width:32px;height:32px;border-radius:50%;background:#263750;display:grid;place-items:center}
+.rivalry-section{margin-top:18px}
+.rivalry-title{font-size:15px;margin:0 0 12px}
+.rivalry-description{color:var(--muted);font-size:11px;margin-bottom:12px;line-height:1.5}
+.rivalry-table-wrap{overflow-x:auto}
+.rivalry-table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:12px;overflow:hidden;min-width:510px}
+.rivalry-table th,.rivalry-table td{padding:12px 9px;text-align:center;border-bottom:1px solid var(--line);font-size:12px}
+.rivalry-table th{color:var(--muted);font-weight:600}
+.rivalry-table tr:last-child td{border-bottom:0}
+.rivalry-table td:first-child,.rivalry-table th:first-child{text-align:left}
+.rivalry-table .good{color:var(--green)}
+.rivalry-table .bad{color:var(--red)}
+.rivalry-table .percent{font-weight:bold}
+.rivalry-highlight{background:#173d3a;border:1px solid #236b5b;border-radius:10px;padding:13px;margin-bottom:12px}
+.rivalry-highlight strong{font-size:17px;color:var(--green)}
+.rivalry-highlight span{display:block;font-size:11px;color:var(--muted);margin-top:5px}
 .hidden{display:none!important}
 footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
 @media(max-width:760px){
@@ -158,6 +174,7 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
 }
 </style>
 </head>
+
 <body>
 
 <header class="topbar">
@@ -209,6 +226,7 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
   <button class="tab active" data-tab="players">Игроки</button>
   <button class="tab" data-tab="matches">Матчи</button>
   <button class="tab" data-tab="attendance">Посещаемость</button>
+  <button class="tab" data-tab="rivalries">⚔️ Противостояния</button>
  </nav>
 
  <section class="section active" id="players">
@@ -289,6 +307,30 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
    </div>
   </div>
   <div id="attendanceContent"></div>
+ </section>
+
+ <!-- НОВЫЙ РАЗДЕЛ: ПРОТИВОСТОЯНИЯ -->
+ <section class="section" id="rivalries">
+  <div class="section-head">
+   <div>
+    <h3>⚔️ История противостояний</h3>
+    <div class="muted">Личные дуэли, партнёрства и история команд</div>
+   </div>
+  </div>
+
+  <div id="rivalryTeamStats" class="stats"></div>
+
+  <div class="form-panel">
+   <h4>👤 Личная статистика игрока</h4>
+   <div class="muted" style="margin-bottom:10px">
+    Выбери игрока, чтобы посмотреть его личные противостояния.
+   </div>
+   <select id="rivalPlayer" style="width:100%">
+    <option value="">Выбери игрока</option>
+   </select>
+  </div>
+
+  <div id="rivalryContent"></div>
  </section>
 </main>
 
@@ -684,18 +726,259 @@ function renderAttendance(){
  `;
 }
 
+/* ==========================================
+   НОВЫЙ РАЗДЕЛ: ИСТОРИЯ ПРОТИВОСТОЯНИЙ
+   ========================================== */
+
+function getRivalryStats(playerName){
+ const opponents={};
+ const partners={};
+
+ data.matches.forEach(m=>{
+  const red=roster(m,"red");
+  const blue=roster(m,"blue");
+
+  const inRed=red.some(n=>samePlayer(n,playerName));
+  const inBlue=blue.some(n=>samePlayer(n,playerName));
+
+  // Если состав неизвестен или игрок оказался
+  // сразу в обеих командах — матч пропускаем.
+  if(inRed===inBlue)return;
+
+  const myTeam=inRed?red:blue;
+  const enemyTeam=inRed?blue:red;
+  const winner=getWinner(m);
+
+  const myColor=inRed?"Красные":"Синие";
+  const won=winner===myColor;
+  const lost=winner!=="Ничья"&&!won;
+  const draw=winner==="Ничья";
+
+  // Соперники — игроки из противоположной команды.
+  enemyTeam.forEach(name=>{
+   if(samePlayer(name,playerName))return;
+
+   const key=normalizeName(name);
+
+   if(!opponents[key]){
+    opponents[key]={
+     name:name,
+     wins:0,
+     losses:0,
+     draws:0,
+     matches:0
+    };
+   }
+
+   const p=opponents[key];
+   p.matches++;
+
+   if(won)p.wins++;
+   else if(lost)p.losses++;
+   else if(draw)p.draws++;
+  });
+
+  // Партнёры — игроки из той же команды.
+  myTeam.forEach(name=>{
+   if(samePlayer(name,playerName))return;
+
+   const key=normalizeName(name);
+
+   if(!partners[key]){
+    partners[key]={
+     name:name,
+     wins:0,
+     losses:0,
+     draws:0,
+     matches:0
+    };
+   }
+
+   const p=partners[key];
+   p.matches++;
+
+   if(won)p.wins++;
+   else if(lost)p.losses++;
+   else if(draw)p.draws++;
+  });
+ });
+
+ const sortStats=items=>Object.values(items).map(p=>({
+  ...p,
+  percent:p.wins+p.losses
+   ?Math.round(p.wins/(p.wins+p.losses)*100):0
+ })).sort((a,b)=>
+  b.matches-a.matches||
+  b.wins-a.wins||
+  a.name.localeCompare(b.name,"ru")
+ );
+
+ return {
+  opponents:sortStats(opponents),
+  partners:sortStats(partners)
+ };
+}
+
+function renderRivalries(){
+ const selector=$("rivalPlayer");
+ const content=$("rivalryContent");
+ const teamBox=$("rivalryTeamStats");
+
+ if(!selector||!content||!teamBox)return;
+
+ // Сохраняем выбранного игрока при обновлении страницы.
+ const selected=selector.value;
+
+ selector.innerHTML=
+  '<option value="">Выбери игрока</option>'+
+  data.players.map(p=>`
+   <option value="${esc(p.name)}" ${
+    samePlayer(p.name,selected)?"selected":""
+   }>${esc(p.name)}</option>
+  `).join("");
+
+ // Общая статистика команд.
+ let redWins=0,blueWins=0,draws=0;
+ let redSets=0,blueSets=0;
+
+ data.matches.forEach(m=>{
+  const winner=getWinner(m);
+
+  if(winner==="Красные")redWins++;
+  else if(winner==="Синие")blueWins++;
+  else draws++;
+
+  // Счёт по партиям.
+  redSets+=Number(m.red)||0;
+  blueSets+=Number(m.blue)||0;
+ });
+
+ teamBox.innerHTML=`
+  <div class="stat">
+   <div class="stat-label">🔴 Победы красных</div>
+   <div class="stat-value green">${redWins}</div>
+  </div>
+  <div class="stat">
+   <div class="stat-label">🔵 Победы синих</div>
+   <div class="stat-value blue">${blueWins}</div>
+  </div>
+  <div class="stat">
+   <div class="stat-label">Ничьи</div>
+   <div class="stat-value orange">${draws}</div>
+  </div>
+  <div class="stat">
+   <div class="stat-label">Партии</div>
+   <div class="stat-value">${redSets}:${blueSets}</div>
+  </div>
+ `;
+
+ if(!data.players.length){
+  content.innerHTML='<div class="empty">Нет зарегистрированных игроков.</div>';
+  return;
+ }
+
+ if(!selected){
+  content.innerHTML=`
+   <div class="empty">
+    Выбери игрока, чтобы увидеть его личных соперников и лучших партнёров.
+   </div>
+  `;
+  return;
+ }
+
+ const stats=getRivalryStats(selected);
+
+ function renderTable(items){
+  if(!items.length){
+   return '<div class="empty">Пока недостаточно данных для статистики.</div>';
+  }
+
+  return `
+   <div class="rivalry-table-wrap">
+    <table class="rivalry-table">
+     <thead>
+      <tr>
+       <th>Игрок</th>
+       <th>Матчи</th>
+       <th>Победы</th>
+       <th>Поражения</th>
+       <th>Ничьи</th>
+       <th>% побед</th>
+      </tr>
+     </thead>
+     <tbody>
+      ${items.map((p,index)=>`
+       <tr>
+        <td>${index===0?"🏆 ":""}${esc(p.name)}</td>
+        <td><strong>${p.matches}</strong></td>
+        <td class="good">${p.wins}</td>
+        <td class="bad">${p.losses}</td>
+        <td>${p.draws}</td>
+        <td class="percent">${p.percent}%</td>
+       </tr>
+      `).join("")}
+     </tbody>
+    </table>
+   </div>
+  `;
+ }
+
+ const topOpponent=stats.opponents[0];
+ const topPartner=stats.partners[0];
+
+ content.innerHTML=`
+  ${topOpponent?`
+   <div class="rivalry-highlight">
+    <strong>⚔️ ${esc(topOpponent.name)}</strong>
+    <span>
+     Самый часто встречающийся соперник:
+     ${topOpponent.matches} матчей
+    </span>
+   </div>
+  `:""}
+
+  ${topPartner?`
+   <div class="rivalry-highlight">
+    <strong>🤝 ${esc(topPartner.name)}</strong>
+    <span>
+     Самый частый партнёр:
+     ${topPartner.matches} совместных матчей
+    </span>
+   </div>
+  `:""}
+
+  <div class="form-panel rivalry-section">
+   <h4 class="rivalry-title">⚔️ Личные противостояния</h4>
+   <div class="rivalry-description">
+    Статистика матчей, в которых выбранный игрок и его соперники находились в разных командах.
+   </div>
+   ${renderTable(stats.opponents)}
+  </div>
+
+  <div class="form-panel rivalry-section">
+   <h4 class="rivalry-title">🤝 Лучшие партнёры</h4>
+   <div class="rivalry-description">
+    Статистика совместных выступлений в одной команде.
+   </div>
+   ${renderTable(stats.partners)}
+  </div>
+ `;
+}
+
 function render(){
  renderStats();
  renderPlayers();
  renderMatches();
  renderRosterOptions();
  renderAttendance();
+ renderRivalries();
 
  $("addPlayerForm").classList.toggle("hidden",!isAdmin);
  $("addMatchForm").classList.toggle("hidden",!isAdmin);
  $("loginButton").classList.toggle("hidden",isAdmin);
  $("logoutButton").classList.toggle("hidden",!isAdmin);
  $("adminLabel").classList.toggle("hidden",!isAdmin);
+
  $("authText").textContent=isAdmin
   ?"Вы вошли как администратор. Изменения доступны только вам."
   :"Статистика открыта для просмотра всем участникам.";
@@ -703,13 +986,22 @@ function render(){
 
 async function load(){
  status("Загружаем данные...");
+
  const {data:row,error}=await db.from("team_state")
   .select("payload").eq("id",1).maybeSingle();
 
- if(error){status("Ошибка загрузки: "+error.message);return;}
- if(!row){status("В базе не найдена запись id=1.");return;}
+ if(error){
+  status("Ошибка загрузки: "+error.message);
+  return;
+ }
+
+ if(!row){
+  status("В базе не найдена запись id=1.");
+  return;
+ }
 
  data=row.payload||{players:[],matches:[]};
+
  if(!Array.isArray(data.players))data.players=[];
  if(!Array.isArray(data.matches))data.matches=[];
 
@@ -718,10 +1010,12 @@ async function load(){
 
  if(oldMatch){
   if(JSON.stringify(oldMatch.redPlayers||[])!==JSON.stringify(NOVEMBER_12_RED)){
-   oldMatch.redPlayers=[...NOVEMBER_12_RED];migrated=true;
+   oldMatch.redPlayers=[...NOVEMBER_12_RED];
+   migrated=true;
   }
   if(JSON.stringify(oldMatch.bluePlayers||[])!==JSON.stringify(NOVEMBER_12_BLUE)){
-   oldMatch.bluePlayers=[...NOVEMBER_12_BLUE];migrated=true;
+   oldMatch.bluePlayers=[...NOVEMBER_12_BLUE];
+   migrated=true;
   }
  }
 
@@ -734,6 +1028,7 @@ async function load(){
 
 async function save(){
  if(!isAdmin||busy)return;
+
  busy=true;
  status("Сохраняем изменения...");
 
@@ -742,13 +1037,20 @@ async function save(){
   .eq("id",1);
 
  busy=false;
+
  if(error)status("Ошибка сохранения: "+error.message);
  else status("Изменения сохранены.");
 }
 
 async function refreshAuth(){
  const {data:result,error}=await db.auth.getUser();
- if(error){isAdmin=false;render();return;}
+
+ if(error){
+  isAdmin=false;
+  render();
+  return;
+ }
+
  const user=result?.user;
  isAdmin=!!user&&user.id===ADMIN_ID;
 
@@ -756,11 +1058,13 @@ async function refreshAuth(){
   await db.auth.signOut();
   status("У аккаунта нет прав администратора.");
  }
+
  render();
 }
 
 function getCheckedIndexes(selector){
- return [...document.querySelectorAll(selector+":checked")].map(x=>Number(x.value));
+ return [...document.querySelectorAll(selector+":checked")]
+  .map(x=>Number(x.value));
 }
 
 function setTeamSelection(redIndexes,blueIndexes){
@@ -777,6 +1081,7 @@ function teamBalanceScore(redIndexes,blueIndexes){
  const blue=blueIndexes.map(i=>data.players[i]);
 
  const sum=(arr,key)=>arr.reduce((s,p)=>s+Number(p[key]||0),0);
+
  const overall=arr=>arr.reduce((s,p)=>s+
   (Number(p.attack||0)+Number(p.receive||0)+Number(p.serve||0))/3,0);
 
@@ -794,8 +1099,6 @@ function findBalancedTeams(indexes){
  let best=null;
  let bestScore=Infinity;
 
- // Для обычного состава перебираем комбинации и выбираем
- // вариант с минимальной разницей игровых показателей.
  if(n<=18){
   function search(start,chosen){
    if(chosen.length===target){
@@ -803,6 +1106,7 @@ function findBalancedTeams(indexes){
     const red=[...chosen];
     const blue=indexes.filter(i=>!chosenSet.has(i));
     const score=teamBalanceScore(red,blue);
+
     if(score<bestScore){
      bestScore=score;
      best={red,blue};
@@ -811,30 +1115,35 @@ function findBalancedTeams(indexes){
    }
 
    const needed=target-chosen.length;
+
    for(let i=start;i<=n-needed;i++){
     chosen.push(indexes[i]);
     search(i+1,chosen);
     chosen.pop();
    }
   }
+
   search(0,[]);
   return best;
  }
 
- // Для очень больших списков используем последовательное
- // распределение сильнейших игроков в более слабую команду.
  const sorted=indexes.slice().sort((a,b)=>
   Number(avg(data.players[b]))-Number(avg(data.players[a]))
  );
+
  const red=[],blue=[];
+
  sorted.forEach((i,index)=>{
   if(red.length>blue.length)blue.push(i);
   else if(blue.length>red.length)red.push(i);
   else if(teamBalanceScore([...red,i],blue)<=teamBalanceScore(red,[...blue,i]))red.push(i);
   else blue.push(i);
  });
+
  return {red,blue};
 }
+
+/* АВТОРИЗАЦИЯ */
 
 $("loginButton").onclick=()=>$("loginForm").classList.remove("hidden");
 $("cancelLogin").onclick=()=>$("loginForm").classList.add("hidden");
@@ -842,14 +1151,24 @@ $("cancelLogin").onclick=()=>$("loginForm").classList.add("hidden");
 $("submitLogin").onclick=async()=>{
  const email=$("email").value.trim();
  const password=$("password").value;
- if(!email||!password){status("Введите почту и пароль.");return;}
+
+ if(!email||!password){
+  status("Введите почту и пароль.");
+  return;
+ }
 
  status("Проверяем вход...");
+
  const {error}=await db.auth.signInWithPassword({email,password});
- if(error){status("Ошибка входа: "+error.message);return;}
+
+ if(error){
+  status("Ошибка входа: "+error.message);
+  return;
+ }
 
  await refreshAuth();
  await load();
+
  $("loginForm").classList.add("hidden");
 };
 
@@ -860,7 +1179,11 @@ $("logoutButton").onclick=async()=>{
  status("Вы вышли из режима администратора.");
 };
 
+/* ПОИСК ИГРОКОВ */
+
 $("searchPlayers").addEventListener("input",renderPlayers);
+
+/* ИЗМЕНЕНИЕ ОЦЕНОК И ФОТОГРАФИЙ */
 
 $("playerGrid").addEventListener("change",async e=>{
  const el=e.target;
@@ -868,6 +1191,7 @@ $("playerGrid").addEventListener("change",async e=>{
  if(el.classList.contains("avatar-upload")){
   const i=Number(el.dataset.player);
   const file=el.files?.[0];
+
   if(!file)return;
 
   if(!file.type.startsWith("image/")){
@@ -875,6 +1199,7 @@ $("playerGrid").addEventListener("change",async e=>{
    el.value="";
    return;
   }
+
   if(file.size>5*1024*1024){
    alert("Размер фотографии не должен превышать 5 МБ.");
    el.value="";
@@ -882,12 +1207,18 @@ $("playerGrid").addEventListener("change",async e=>{
   }
 
   status("Загружаем фотографию...");
-  const extension=(file.name.split(".").pop()||"jpg").replace(/[^a-z0-9]/gi,"");
+
+  const extension=(file.name.split(".").pop()||"jpg")
+   .replace(/[^a-z0-9]/gi,"");
+
   const path=`player-${i}-${Date.now()}.${extension}`;
 
   const {error:uploadError}=await db.storage
    .from(AVATAR_BUCKET)
-   .upload(path,file,{upsert:true,contentType:file.type});
+   .upload(path,file,{
+    upsert:true,
+    contentType:file.type
+   });
 
   if(uploadError){
    status("Ошибка загрузки фотографии: "+uploadError.message);
@@ -895,29 +1226,39 @@ $("playerGrid").addEventListener("change",async e=>{
    return;
   }
 
-  const {data:urlData}=db.storage.from(AVATAR_BUCKET).getPublicUrl(path);
+  const {data:urlData}=db.storage
+   .from(AVATAR_BUCKET)
+   .getPublicUrl(path);
+
   data.players[i].avatar=urlData.publicUrl;
+
   render();
   await save();
   return;
  }
 
  if(!el.dataset.field)return;
+
  const i=Number(el.dataset.player);
  const field=el.dataset.field;
 
  if(!validRating(el.value)){
   alert("Оценка должна быть целым числом от 0 до 10.");
-  renderPlayers();return;
+  renderPlayers();
+  return;
  }
 
  data.players[i][field]=Number(el.value);
+
  render();
  await save();
 });
 
+/* УДАЛЕНИЕ ИГРОКОВ */
+
 $("playerGrid").addEventListener("click",async e=>{
  if(!e.target.classList.contains("delete-player"))return;
+
  const i=Number(e.target.dataset.i);
 
  if(confirm("Удалить игрока "+data.players[i].name+"?")){
@@ -927,49 +1268,73 @@ $("playerGrid").addEventListener("click",async e=>{
  }
 });
 
+/* ДОБАВЛЕНИЕ ИГРОКОВ */
+
 $("addPlayer").onclick=async()=>{
  const name=$("newName").value.trim();
- if(!name){alert("Введите имя игрока.");return;}
+
+ if(!name){
+  alert("Введите имя игрока.");
+  return;
+ }
+
  if(data.players.some(p=>samePlayer(p.name,name))){
-  alert("Игрок с таким именем уже существует.");return;
+  alert("Игрок с таким именем уже существует.");
+  return;
  }
 
  const fields=["newAttack","newReceive","newServe"];
  const values=fields.map(id=>$(id).value);
+
  if(values.some(v=>!validRating(v))){
-  alert("Все оценки должны быть от 0 до 10.");return;
+  alert("Все оценки должны быть от 0 до 10.");
+  return;
  }
 
  data.players.push({
-  name,attack:Number(values[0]),receive:Number(values[1]),serve:Number(values[2])
+  name,
+  attack:Number(values[0]),
+  receive:Number(values[1]),
+  serve:Number(values[2])
  });
+
  $("newName").value="";
+
  render();
  await save();
 };
 
+/* ПОСЕЩАЕМОСТЬ */
+
 $("attendanceOptions").addEventListener("change",updateAttendanceCount);
 
-// Если игрока добавили в состав команды вручную,
-// автоматически отмечаем его присутствие.
 document.addEventListener("change",e=>{
  if(!e.target.classList.contains("roster-check"))return;
 
  const index=Number(e.target.value);
- const attendance=document.querySelector(`.attendance-check[value="${index}"]`);
+ const attendance=document.querySelector(
+  `.attendance-check[value="${index}"]`
+ );
 
- if(e.target.checked&&attendance)attendance.checked=true;
+ if(e.target.checked&&attendance){
+  attendance.checked=true;
+ }
+
  updateAttendanceCount();
 });
 
+/* АВТОМАТИЧЕСКОЕ ФОРМИРОВАНИЕ КОМАНД */
+
 $("autoTeams").onclick=()=>{
  const indexes=getCheckedIndexes(".attendance-check");
+
  if(indexes.length<2){
   alert("Отметь минимум двух пришедших игроков.");
   return;
  }
 
  const teams=findBalancedTeams(indexes);
+
  if(!teams)return;
 
  setTeamSelection(teams.red,teams.blue);
@@ -986,10 +1351,16 @@ $("autoTeams").onclick=()=>{
 };
 
 $("clearTeams").onclick=()=>{
- document.querySelectorAll(".roster-check").forEach(x=>x.checked=false);
- document.querySelectorAll(".attendance-check").forEach(x=>x.checked=false);
+ document.querySelectorAll(".roster-check")
+  .forEach(x=>x.checked=false);
+
+ document.querySelectorAll(".attendance-check")
+  .forEach(x=>x.checked=false);
+
  updateAttendanceCount();
 };
+
+/* ДОБАВЛЕНИЕ МАТЧА */
 
 $("addMatch").onclick=async()=>{
  const date=$("matchDate").value;
@@ -997,12 +1368,15 @@ $("addMatch").onclick=async()=>{
  const b=$("blueScore").value;
 
  if(!date||r===""||b===""){
-  alert("Укажите дату и счёт.");return;
+  alert("Укажите дату и счёт.");
+  return;
  }
 
  const red=Number(r),blue=Number(b);
+
  if(!Number.isInteger(red)||!Number.isInteger(blue)||red<0||blue<0){
-  alert("Введите корректный счёт.");return;
+  alert("Введите корректный счёт.");
+  return;
  }
 
  const redIndexes=getCheckedIndexes('.roster-check[data-team="red"]');
@@ -1010,7 +1384,8 @@ $("addMatch").onclick=async()=>{
  const attendanceIndexes=getCheckedIndexes(".attendance-check");
 
  if(!redIndexes.length||!blueIndexes.length){
-  alert("Выберите составы обеих команд.");return;
+  alert("Выберите составы обеих команд.");
+  return;
  }
 
  const redPlayers=redIndexes.map(i=>data.players[i].name);
@@ -1026,30 +1401,38 @@ $("addMatch").onclick=async()=>{
  }
 
  const redSet=new Set(redPlayers.map(normalizeName));
+
  if(bluePlayers.some(name=>redSet.has(normalizeName(name)))){
   alert("Один игрок не может быть одновременно в двух командах.");
   return;
  }
 
- // В посещаемость включаем всех выбранных участников.
  data.matches.push({
-  date,red,blue,
+  date,
+  red,
+  blue,
   winner:red>blue?"Красные":blue>red?"Синие":"Ничья",
-  redPlayers,bluePlayers,attendance
+  redPlayers,
+  bluePlayers,
+  attendance
  });
 
  $("redScore").value="";
  $("blueScore").value="";
  $("matchDate").value="";
 
- document.querySelectorAll(".roster-check,.attendance-check").forEach(x=>x.checked=false);
+ document.querySelectorAll(".roster-check,.attendance-check")
+  .forEach(x=>x.checked=false);
 
  render();
  await save();
 };
 
+/* УДАЛЕНИЕ МАТЧЕЙ */
+
 $("matchesList").addEventListener("click",async e=>{
  if(!e.target.classList.contains("delete-match"))return;
+
  const i=Number(e.target.dataset.i);
 
  if(confirm("Удалить этот матч?")){
@@ -1059,14 +1442,26 @@ $("matchesList").addEventListener("click",async e=>{
  }
 });
 
+/* ВЫБОР ИГРОКА В ПРОТИВОСТОЯНИЯХ */
+
+$("rivalPlayer").addEventListener("change",renderRivalries);
+
+/* ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК */
+
 document.querySelectorAll(".tab").forEach(btn=>{
  btn.onclick=()=>{
-  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-  document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".tab")
+   .forEach(x=>x.classList.remove("active"));
+
+  document.querySelectorAll(".section")
+   .forEach(x=>x.classList.remove("active"));
+
   btn.classList.add("active");
   $(btn.dataset.tab).classList.add("active");
  };
 });
+
+/* ЗАПУСК И СИНХРОНИЗАЦИЯ SUPABASE */
 
 async function start(){
  await refreshAuth();
@@ -1074,7 +1469,9 @@ async function start(){
 
  db.channel("team-state-changes")
   .on("postgres_changes",{
-   event:"UPDATE",schema:"public",table:"team_state"
+   event:"UPDATE",
+   schema:"public",
+   table:"team_state"
   },async()=>{
    if(!busy)await load();
   })
@@ -1082,6 +1479,7 @@ async function start(){
 }
 
 start();
+
 </script>
 </body>
 </html>
