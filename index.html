@@ -1,0 +1,375 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Волейбольная команда — статистика</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101827;color:#f1f5f9;font-family:Arial,sans-serif}
+header{padding:22px 16px;background:#17243a;text-align:center}
+h1{margin:0;font-size:24px}
+header p{color:#9fb0c8;margin:8px 0 0}
+main{max-width:1000px;margin:20px auto;padding:0 14px}
+.card{background:#1b2940;border-radius:12px;padding:16px;margin-bottom:16px}
+h2{font-size:19px;margin:0 0 14px}
+button{border:0;border-radius:8px;padding:10px 14px;background:#3478f6;color:white;font-weight:bold;cursor:pointer;margin:3px}
+button.secondary{background:#43536b}
+button.danger{background:#bd4242}
+input,select{background:#101827;color:white;border:1px solid #43536b;border-radius:7px;padding:10px;margin:4px;max-width:100%}
+input[type=number]{width:65px}
+table{width:100%;border-collapse:collapse;min-width:570px}
+th,td{padding:10px 7px;border-bottom:1px solid #35445b;text-align:center}
+th{color:#9fb0c8;font-size:13px}
+td:first-child,th:first-child{text-align:left}
+.table-wrap{overflow-x:auto}
+.muted{color:#9fb0c8;font-size:13px}
+.status{font-size:13px;margin-top:10px;color:#9fb0c8}
+.hidden{display:none}
+.form-row{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+.match{padding:12px 0;border-bottom:1px solid #35445b}
+footer{text-align:center;color:#75859e;padding:20px;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+<h1>🏐 Волейбольная команда</h1>
+<p>Статистика игроков и история матчей</p>
+</header>
+
+<main>
+<div class="card">
+<div id="authArea">
+<button id="loginButton">Вход администратора</button>
+<span class="muted">Статистика доступна всем</span>
+<div id="loginForm" class="hidden">
+<h2>Вход администратора</h2>
+<input id="email" type="email" placeholder="Электронная почта">
+<input id="password" type="password" placeholder="Пароль">
+<button id="submitLogin">Войти</button>
+<button class="secondary" id="cancelLogin">Отмена</button>
+</div>
+</div>
+<div id="adminArea" class="hidden">
+<strong>Режим администратора</strong>
+<button class="secondary" id="logoutButton">Выйти</button>
+</div>
+<div class="status" id="status">Подключение к базе данных...</div>
+</div>
+
+<div class="card">
+<h2>Игроки команды</h2>
+<div class="muted">Оценки по шкале от 0 до 10. Чем выше оценка, тем сильнее навык.</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Игрок</th><th>Нападение</th><th>Приём</th><th>Подача</th><th>Средняя</th><th class="admin-column hidden">Действия</th></tr>
+</thead>
+<tbody id="playersTable"></tbody>
+</table>
+</div>
+<div id="addPlayerForm" class="hidden">
+<h3>Добавить игрока</h3>
+<div class="form-row">
+<input id="newName" placeholder="Имя игрока">
+<input id="newAttack" type="number" min="0" max="10" value="5" placeholder="Нападение">
+<input id="newReceive" type="number" min="0" max="10" value="5" placeholder="Приём">
+<input id="newServe" type="number" min="0" max="10" value="5" placeholder="Подача">
+<button id="addPlayer">Добавить</button>
+</div>
+</div>
+</div>
+
+<div class="card">
+<h2>История матчей</h2>
+<div id="matchesList"></div>
+<div id="addMatchForm" class="hidden">
+<h3>Добавить результат</h3>
+<div class="form-row">
+<input id="matchDate" type="date">
+<input id="redScore" type="number" min="0" placeholder="Красные">
+<span>:</span>
+<input id="blueScore" type="number" min="0" placeholder="Синие">
+<button id="addMatch">Сохранить матч</button>
+</div>
+</div>
+</div>
+</main>
+
+<footer>Волейбольная статистика команды</footer>
+
+<script>
+const SUPABASE_URL = "https://qautfnjsklvzjkihzfr.supabase.co";
+const SUPABASE_KEY = "sb_publishable_ZF5RcY1bBm2-QV9L2e0qLg_OmDwjUs4";
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const initialData = {
+ players: [
+  {name:"Илья",attack:9,receive:7,serve:8},
+  {name:"Семён",attack:9,receive:9,serve:8},
+  {name:"Максим",attack:7,receive:9,serve:8},
+  {name:"Елена Крохина",attack:4,receive:7,serve:7},
+  {name:"Евгений Буданов",attack:1,receive:4,serve:4},
+  {name:"Марат Юсупов",attack:6,receive:5,serve:6},
+  {name:"Вова",attack:8,receive:9,serve:7},
+  {name:"Сергей Малявкин",attack:8,receive:9,serve:8},
+  {name:"Сергей Карташов",attack:8,receive:8,serve:8},
+  {name:"Евгений Мойсук",attack:7,receive:8,serve:7},
+  {name:"Виталий",attack:3,receive:7,serve:7},
+  {name:"Ксюша",attack:0,receive:1,serve:4},
+  {name:"Динара",attack:1,receive:4,serve:5},
+  {name:"Катя",attack:5,receive:8,serve:7}
+ ],
+ matches: [
+  {
+   date:"2026-11-12",
+   red:4,
+   blue:3,
+   winner:"Красные",
+   redPlayers:["Илья","Максим","Лена Крохина","Евгений Буданов","Марат Юсупов","Сергей Карташов"]
+  }
+ ]
+};
+
+let data = {players:[],matches:[]};
+let isAdmin = false;
+let busy = false;
+
+const statusEl = document.getElementById("status");
+
+function status(message){
+ statusEl.textContent = message;
+}
+
+function average(p){
+ return ((Number(p.attack)+Number(p.receive)+Number(p.serve))/3).toFixed(1);
+}
+
+function safe(value){
+ return String(value ?? "").replace(/[&<>"']/g,c=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ }[c]));
+}
+
+function render(){
+ const tbody = document.getElementById("playersTable");
+ tbody.innerHTML = "";
+
+ data.players.forEach((p,i)=>{
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+   <td>${safe(p.name)}</td>
+   <td>${isAdmin ? `<input type="number" min="0" max="10" value="${p.attack}" data-i="${i}" data-field="attack">` : p.attack}</td>
+   <td>${isAdmin ? `<input type="number" min="0" max="10" value="${p.receive}" data-i="${i}" data-field="receive">` : p.receive}</td>
+   <td>${isAdmin ? `<input type="number" min="0" max="10" value="${p.serve}" data-i="${i}" data-field="serve">` : p.serve}</td>
+   <td>${average(p)}</td>
+   ${isAdmin ? `<td><button class="danger delete-player" data-i="${i}">Удалить</button></td>` : ""}
+  `;
+  tbody.appendChild(tr);
+ });
+
+ document.querySelectorAll(".admin-column").forEach(el=>{
+  el.classList.toggle("hidden",!isAdmin);
+ });
+
+ document.getElementById("addPlayerForm").classList.toggle("hidden",!isAdmin);
+ document.getElementById("addMatchForm").classList.toggle("hidden",!isAdmin);
+ document.getElementById("authArea").classList.toggle("hidden",isAdmin);
+ document.getElementById("adminArea").classList.toggle("hidden",!isAdmin);
+
+ const matches = document.getElementById("matchesList");
+ matches.innerHTML = data.matches.length
+  ? data.matches.slice().reverse().map((m,i)=>`
+    <div class="match">
+     <strong>${safe(m.date || "Дата не указана")}</strong><br>
+     Красные ${safe(m.red)} : ${safe(m.blue)} Синие
+     <span class="muted"> — победа: ${safe(m.winner || "не указана")}</span>
+     ${m.redPlayers?.length ? `<div class="muted">Красные: ${m.redPlayers.map(safe).join(", ")}</div>` : ""}
+     ${isAdmin ? `<button class="danger delete-match" data-i="${data.matches.length-1-i}">Удалить</button>` : ""}
+    </div>`).join("")
+  : '<p class="muted">Матчей пока нет.</p>';
+}
+
+async function save(){
+ if(!isAdmin || busy) return;
+ busy = true;
+ status("Сохранение...");
+ const {error} = await db.from("team_state")
+  .update({payload:data,updated_at:new Date().toISOString()})
+  .eq("id",1);
+ busy = false;
+ if(error){
+  status("Ошибка сохранения: "+error.message);
+ } else {
+  status("Изменения сохранены.");
+ }
+}
+
+async function load(){
+ status("Загружаем статистику...");
+ const {data:row,error} = await db.from("team_state")
+  .select("payload").eq("id",1).maybeSingle();
+
+ if(error){
+  status("Ошибка загрузки: "+error.message);
+  return;
+ }
+
+ if(!row){
+  status("В базе нет строки с id=1. Проверь настройку Supabase.");
+  return;
+ }
+
+ data = row.payload || {players:[],matches:[]};
+
+ if(!Array.isArray(data.players)) data.players=[];
+ if(!Array.isArray(data.matches)) data.matches=[];
+
+ // Если база пока пустая, загружаем стартовый состав и первый результат.
+ if(data.players.length===0 && data.matches.length===0){
+  data = JSON.parse(JSON.stringify(initialData));
+  if(isAdmin) await save();
+ }
+
+ render();
+ status("Данные загружены.");
+}
+
+document.getElementById("loginButton").onclick=()=>{
+ document.getElementById("loginForm").classList.remove("hidden");
+};
+document.getElementById("cancelLogin").onclick=()=>{
+ document.getElementById("loginForm").classList.add("hidden");
+};
+
+document.getElementById("submitLogin").onclick=async()=>{
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ if(!email || !password){status("Введи почту и пароль.");return;}
+ status("Проверяем данные...");
+ const {error}=await db.auth.signInWithPassword({email,password});
+ if(error){status("Ошибка входа: "+error.message);return;}
+ await checkUser();
+};
+
+document.getElementById("logoutButton").onclick=async()=>{
+ await db.auth.signOut();
+ isAdmin=false;
+ render();
+ status("Вы вышли из режима администратора.");
+};
+
+async function checkUser(){
+ const {data:result}=await db.auth.getUser();
+ const user=result?.user;
+ isAdmin=!!user && user.id==="de2354d3-3896-4dcf-bf4a-353b633fc3c5";
+ if(user && !isAdmin){
+  await db.auth.signOut();
+  status("У этого аккаунта нет прав администратора.");
+  isAdmin=false;
+ } else if(isAdmin){
+  status("Вход выполнен. Режим администратора активен.");
+ }
+ render();
+ await load();
+}
+
+document.getElementById("playersTable").addEventListener("change",async e=>{
+ const el=e.target;
+ if(!el.dataset.field) return;
+ const i=Number(el.dataset.i);
+ const field=el.dataset.field;
+ const value=Number(el.value);
+ if(!Number.isInteger(value)||value<0||value>10){
+  alert("Оценка должна быть от 0 до 10.");
+  render();return;
+ }
+ data.players[i][field]=value;
+ render();
+ await save();
+});
+
+document.getElementById("playersTable").addEventListener("click",async e=>{
+ if(!e.target.classList.contains("delete-player")) return;
+ const i=Number(e.target.dataset.i);
+ if(confirm("Удалить игрока "+data.players[i].name+"?")){
+  data.players.splice(i,1);
+  render();
+  await save();
+ }
+});
+
+document.getElementById("addPlayer").onclick=async()=>{
+ const name=document.getElementById("newName").value.trim();
+ if(!name){alert("Введи имя игрока.");return;}
+ const rating=id=>{
+  const n=Number(document.getElementById(id).value);
+  return Number.isInteger(n)&&n>=0&&n<=10?n:5;
+ };
+ data.players.push({
+  name,
+  attack:rating("newAttack"),
+  receive:rating("newReceive"),
+  serve:rating("newServe")
+ });
+ document.getElementById("newName").value="";
+ render();
+ await save();
+};
+
+document.getElementById("addMatch").onclick=async()=>{
+ const date=document.getElementById("matchDate").value;
+ const red=Number(document.getElementById("redScore").value);
+ const blue=Number(document.getElementById("blueScore").value);
+ if(!date || document.getElementById("redScore").value==="" ||
+ document.getElementById("blueScore").value===""){
+  alert("Укажи дату и счёт матча.");return;
+ }
+ data.matches.push({
+  date,red,blue,
+  winner:red>blue?"Красные":blue>red?"Синие":"Ничья"
+ });
+ render();
+ await save();
+ document.getElementById("redScore").value="";
+ document.getElementById("blueScore").value="";
+};
+
+document.getElementById("matchesList").addEventListener("click",async e=>{
+ if(!e.target.classList.contains("delete-match")) return;
+ const i=Number(e.target.dataset.i);
+ if(confirm("Удалить этот матч?")){
+  data.matches.splice(i,1);
+  render();
+  await save();
+ }
+});
+
+db.auth.onAuthStateChange(async(event)=>{
+ if(event==="SIGNED_IN" || event==="SIGNED_OUT"){
+  await checkUser();
+ }
+});
+
+async function start(){
+ const {data:result}=await db.auth.getUser();
+ const user=result?.user;
+ isAdmin=!!user && user.id==="de2354d3-3896-4dcf-bf4a-353b633fc3c5";
+ if(user && !isAdmin) await db.auth.signOut();
+ await load();
+ render();
+
+ db.channel("team-state-changes")
+  .on("postgres_changes",
+   {event:"UPDATE",schema:"public",table:"team_state"},
+   async()=>{if(!busy){await load();}}
+  ).subscribe();
+}
+
+start();
+</script>
+</body>
+</html>
