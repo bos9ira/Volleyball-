@@ -10,13 +10,15 @@
 :root{
  --bg:#08111f;--panel:#111e31;--panel2:#17263c;
  --line:#263750;--text:#edf3fc;--muted:#8fa2bd;
- --green:#20d69b;--blue:#3988ff;--orange:#ffad42;
- --red:#ff6474;
+ --green:#20d69b;--blue:#3988ff;--orange:#ffad42;--red:#ff6474;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
 button,input{font:inherit}
-button{cursor:pointer}
+button{cursor:pointer;border:0;border-radius:9px;padding:10px 14px;background:var(--blue);color:white;font-weight:700}
+button.secondary{background:#263750;color:#dce8fa}
+button.danger{background:#713342;color:#fff}
+button:hover{filter:brightness(1.12)}
 .topbar{background:#0d192b;border-bottom:1px solid var(--line);padding:18px 20px}
 .top-inner{max-width:1100px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:15px}
 .brand{display:flex;align-items:center;gap:12px}
@@ -24,10 +26,6 @@ button{cursor:pointer}
 .brand h1{font-size:19px;margin:0}
 .brand small{display:block;color:var(--muted);margin-top:4px;font-size:11px;letter-spacing:1px}
 .top-actions{display:flex;align-items:center;gap:8px}
-button{border:0;border-radius:9px;padding:10px 14px;background:var(--blue);color:white;font-weight:700}
-button.secondary{background:#263750;color:#dce8fa}
-button.danger{background:#713342;color:#fff}
-button:hover{filter:brightness(1.12)}
 main{max-width:1100px;margin:25px auto;padding:0 16px}
 .hero{display:flex;justify-content:space-between;align-items:end;gap:15px;margin-bottom:20px}
 .eyebrow{color:var(--green);font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase}
@@ -78,16 +76,41 @@ input[type=number]{width:100%}
 .score{font-size:29px;font-weight:800;letter-spacing:2px}
 .score .winner{color:var(--green)}
 .match-result{text-align:center;color:var(--green);font-size:12px;margin-top:10px;font-weight:bold}
-.match-roster{margin-top:12px;color:var(--muted);font-size:12px;line-height:1.6}
+.match-rosters{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px}
+.roster-box{background:#0b1728;border:1px solid var(--line);border-radius:10px;padding:11px;min-width:0}
+.roster-title{font-size:11px;font-weight:bold;margin-bottom:7px}
+.roster-title.red{color:var(--red)}
+.roster-title.blue{color:#72aaff}
+.roster-names{font-size:12px;color:var(--muted);line-height:1.7;overflow-wrap:anywhere}
 .match-admin{margin-top:10px;text-align:right}
+.player-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:15px}
+.player-stat{background:#0b1728;border-radius:8px;padding:8px 4px;text-align:center}
+.player-stat strong{display:block;font-size:16px}
+.player-stat span{display:block;color:var(--muted);font-size:9px;margin-top:4px}
+.player-history{margin-top:13px;border-top:1px solid var(--line);padding-top:10px}
+.player-history summary{cursor:pointer;color:#a9bdd7;font-size:12px}
+.history-item{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5}
+.history-win{color:var(--green)}
+.history-loss{color:var(--red)}
+.history-unknown{color:var(--orange)}
 .empty{padding:25px;text-align:center;color:var(--muted);background:var(--panel);border-radius:12px}
 .auth-panel{background:var(--panel);border:1px solid var(--line);padding:16px;border-radius:13px;margin-bottom:18px}
 .auth-panel input{margin:5px 5px 5px 0}
 #loginForm{margin-top:12px}
 .status{font-size:12px;color:var(--muted);margin-top:10px}
 .admin-note{color:var(--green);font-size:12px}
-footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
+.roster-selects{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:15px}
+.team-select{background:#0b1728;border:1px solid var(--line);border-radius:10px;padding:12px;min-width:0}
+.team-select h5{margin:0 0 10px;font-size:13px}
+.team-select.red h5{color:var(--red)}
+.team-select.blue h5{color:#72aaff}
+.player-options{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.player-option{display:flex;align-items:center;gap:7px;font-size:12px;color:#dce8fa;min-width:0}
+.player-option input{width:16px;height:16px;flex-shrink:0;margin:0;accent-color:var(--green)}
+.form-hint{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5}
+.form-actions{margin-top:13px}
 .hidden{display:none!important}
+footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
 @media(max-width:760px){
  .player-grid{grid-template-columns:repeat(2,1fr)}
  .stats{grid-template-columns:repeat(2,1fr)}
@@ -103,6 +126,8 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
  .stat-value{font-size:24px}
  .scoreline{gap:12px}
  .team{font-size:11px}
+ .match-rosters,.roster-selects{grid-template-columns:1fr}
+ .player-options{grid-template-columns:1fr 1fr}
 }
 </style>
 </head>
@@ -135,22 +160,10 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
  </div>
 
  <div class="stats">
-  <div class="stat">
-   <div class="stat-label">Игроков</div>
-   <div class="stat-value blue" id="playersCount">—</div>
-  </div>
-  <div class="stat">
-   <div class="stat-label">Матчей сыграно</div>
-   <div class="stat-value" id="matchesCount">—</div>
-  </div>
-  <div class="stat">
-   <div class="stat-label">Побед красных</div>
-   <div class="stat-value green" id="redWins">—</div>
-  </div>
-  <div class="stat">
-   <div class="stat-label">Побед синих</div>
-   <div class="stat-value orange" id="blueWins">—</div>
-  </div>
+  <div class="stat"><div class="stat-label">Игроков</div><div class="stat-value blue" id="playersCount">—</div></div>
+  <div class="stat"><div class="stat-label">Матчей сыграно</div><div class="stat-value" id="matchesCount">—</div></div>
+  <div class="stat"><div class="stat-label">Побед красных</div><div class="stat-value green" id="redWins">—</div></div>
+  <div class="stat"><div class="stat-label">Побед синих</div><div class="stat-value orange" id="blueWins">—</div></div>
  </div>
 
  <div class="auth-panel">
@@ -174,7 +187,7 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
   <div class="section-head">
    <div>
     <h3>Рейтинг игроков</h3>
-    <div class="muted">Сортировка по среднему рейтингу</div>
+    <div class="muted">Рейтинг и личная статистика</div>
    </div>
    <input class="search" id="searchPlayers" placeholder="Поиск игрока...">
   </div>
@@ -196,7 +209,7 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
   <div class="section-head">
    <div>
     <h3>История матчей</h3>
-    <div class="muted">Все сохранённые результаты</div>
+    <div class="muted">Результаты и составы обеих команд</div>
    </div>
   </div>
   <div id="matchesList" class="match-list"></div>
@@ -205,8 +218,22 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
    <h4>Добавить результат матча</h4>
    <div class="form-row">
     <input id="matchDate" type="date">
-    <input id="redScore" type="number" min="0" placeholder="Красные">
-    <input id="blueScore" type="number" min="0" placeholder="Синие">
+    <input id="redScore" type="number" min="0" placeholder="Очки красных">
+    <input id="blueScore" type="number" min="0" placeholder="Очки синих">
+   </div>
+
+   <div class="roster-selects">
+    <div class="team-select red">
+     <h5>🔴 Состав красных</h5>
+     <div id="redPlayerOptions" class="player-options"></div>
+    </div>
+    <div class="team-select blue">
+     <h5>🔵 Состав синих</h5>
+     <div id="bluePlayerOptions" class="player-options"></div>
+    </div>
+   </div>
+   <div class="form-hint">Выбери игроков, которые участвовали в матче. Один игрок не может находиться сразу в двух командах. Для сохранения необходимо выбрать составы обеих команд.</div>
+   <div class="form-actions">
     <button id="addMatch">Сохранить матч</button>
    </div>
   </div>
@@ -244,13 +271,57 @@ function validRating(v){
  return Number.isInteger(n)&&n>=0&&n<=10;
 }
 
+// Совместимость старого имени «Лена Крохина» с именем игрока «Елена Крохина».
+function normalizeName(name){
+ let n=String(name||"").trim().toLowerCase().replace(/\s+/g," ");
+ if(n==="лена крохина")n="елена крохина";
+ return n;
+}
+function samePlayer(a,b){
+ return normalizeName(a)===normalizeName(b);
+}
+function getWinner(m){
+ if(m.winner==="Красные"||m.winner==="Синие"||m.winner==="Ничья")return m.winner;
+ const r=Number(m.red),b=Number(m.blue);
+ return r>b?"Красные":b>r?"Синие":"Ничья";
+}
+function roster(m,team){
+ const value=team==="red"?m.redPlayers:m.bluePlayers;
+ return Array.isArray(value)?value:[];
+}
+function playerStats(playerName){
+ let played=0,wins=0,losses=0,history=[];
+ data.matches.forEach(m=>{
+  const red=roster(m,"red");
+  const blue=roster(m,"blue");
+  const inRed=red.some(n=>samePlayer(n,playerName));
+  const inBlue=blue.some(n=>samePlayer(n,playerName));
+  if(!inRed&&!inBlue)return;
+
+  played++;
+  const winner=getWinner(m);
+  let result="Неизвестно";
+  if(winner==="Ничья")result="Ничья";
+  else if((inRed&&winner==="Красные")||(inBlue&&winner==="Синие")){
+   wins++;
+   result="Победа";
+  }else if((inRed&&winner==="Синие")||(inBlue&&winner==="Красные")){
+   losses++;
+   result="Поражение";
+  }
+  history.push({date:m.date||"Дата не указана",red:m.red,blue:m.blue,result});
+ });
+ return {played,wins,losses,percent:played?Math.round(wins/(wins+losses)*100)||0:0,history};
+}
+
 function renderStats(){
  $("playersCount").textContent=data.players.length;
  $("matchesCount").textContent=data.matches.length;
  let red=0,blue=0;
  data.matches.forEach(m=>{
-  if(m.winner==="Красные" || (m.winner==null && Number(m.red)>Number(m.blue)))red++;
-  if(m.winner==="Синие" || (m.winner==null && Number(m.blue)>Number(m.red)))blue++;
+  const winner=getWinner(m);
+  if(winner==="Красные")red++;
+  if(winner==="Синие")blue++;
  });
  $("redWins").textContent=red;
  $("blueWins").textContent=blue;
@@ -261,8 +332,8 @@ function renderPlayers(){
  const query=$("searchPlayers").value.trim().toLowerCase();
  const sorted=data.players.map((p,i)=>({...p,_i:i}))
   .sort((a,b)=>Number(avg(b))-Number(avg(a)));
-
  const filtered=sorted.filter(p=>p.name.toLowerCase().includes(query));
+
  if(!filtered.length){
   grid.innerHTML='<div class="empty">Игроки не найдены.</div>';
   return;
@@ -270,11 +341,9 @@ function renderPlayers(){
 
  grid.innerHTML=filtered.map((p,index)=>{
   const i=p._i;
-  const skills=[
-   ["Нападение","attack"],
-   ["Приём","receive"],
-   ["Подача","serve"]
-  ];
+  const skills=[["Нападение","attack"],["Приём","receive"],["Подача","serve"]];
+  const stats=playerStats(p.name);
+
   return `
    <article class="player-card">
     <div class="player-top">
@@ -282,26 +351,38 @@ function renderPlayers(){
       <div class="player-name">${esc(p.name)}</div>
       <div class="player-rank">Место в рейтинге: #${index+1}</div>
      </div>
-     <div class="rating" style="color:${ratingColor(Number(avg(p)))}">
-      ${avg(p)}
-     </div>
+     <div class="rating" style="color:${ratingColor(Number(avg(p)))}">${avg(p)}</div>
     </div>
+
     ${skills.map(([label,key])=>`
      <div class="skill">
-      <div class="skill-row">
-       <span>${label}</span><strong>${Number(p[key])}/10</strong>
-      </div>
-      <div class="track">
-       <div class="fill" style="width:${Number(p[key])*10}%"></div>
-      </div>
+      <div class="skill-row"><span>${label}</span><strong>${Number(p[key])}/10</strong></div>
+      <div class="track"><div class="fill" style="width:${Number(p[key])*10}%"></div></div>
      </div>
     `).join("")}
+
+    <div class="player-stats">
+     <div class="player-stat"><strong>${stats.played}</strong><span>МАТЧЕЙ</span></div>
+     <div class="player-stat"><strong style="color:var(--green)">${stats.wins}</strong><span>ПОБЕД</span></div>
+     <div class="player-stat"><strong style="color:var(--red)">${stats.losses}</strong><span>ПОРАЖЕНИЙ</span></div>
+     <div class="player-stat"><strong>${stats.percent}%</strong><span>ПОБЕД</span></div>
+    </div>
+
+    <details class="player-history">
+     <summary>История матчей (${stats.history.length})</summary>
+     ${stats.history.length?stats.history.slice().reverse().map(h=>`
+      <div class="history-item">
+       ${esc(h.date)} · ${esc(h.red)}:${esc(h.blue)} —
+       <strong class="${h.result==="Победа"?"history-win":h.result==="Поражение"?"history-loss":"history-unknown"}">${h.result}</strong>
+      </div>
+     `).join(""):'<div class="history-item">Пока нет матчей с указанным составом.</div>'}
+    </details>
+
     ${isAdmin?`
      <div class="player-edit">
       ${skills.map(([label,key])=>`
        <label>${label}
-        <input type="number" min="0" max="10" value="${Number(p[key])}"
-         data-player="${i}" data-field="${key}">
+        <input type="number" min="0" max="10" value="${Number(p[key])}" data-player="${i}" data-field="${key}">
        </label>
       `).join("")}
      </div>
@@ -317,9 +398,14 @@ function renderMatches(){
   list.innerHTML='<div class="empty">Матчей пока нет.</div>';
   return;
  }
+
  list.innerHTML=data.matches.map((m,i)=>{
-  const redWin=m.winner==="Красные" || (!m.winner && Number(m.red)>Number(m.blue));
-  const blueWin=m.winner==="Синие" || (!m.winner && Number(m.blue)>Number(m.red));
+  const winner=getWinner(m);
+  const redWin=winner==="Красные";
+  const blueWin=winner==="Синие";
+  const redPlayers=roster(m,"red");
+  const bluePlayers=roster(m,"blue");
+
   return `
    <article class="match-card">
     <div class="match-date">${esc(m.date||"Дата не указана")}</div>
@@ -333,9 +419,18 @@ function renderMatches(){
      <span class="team">🔵 СИНИЕ</span>
     </div>
     <div class="match-result">${redWin?"ПОБЕДА КРАСНЫХ":blueWin?"ПОБЕДА СИНИХ":"НИЧЬЯ"}</div>
-    ${m.redPlayers?.length?`
-     <div class="match-roster">Состав красных: ${m.redPlayers.map(esc).join(", ")}</div>
-    `:""}
+
+    <div class="match-rosters">
+     <div class="roster-box">
+      <div class="roster-title red">🔴 СОСТАВ КРАСНЫХ</div>
+      <div class="roster-names">${redPlayers.length?redPlayers.map(esc).join(", "):"Состав не указан"}</div>
+     </div>
+     <div class="roster-box">
+      <div class="roster-title blue">🔵 СОСТАВ СИНИХ</div>
+      <div class="roster-names">${bluePlayers.length?bluePlayers.map(esc).join(", "):"Состав не указан"}</div>
+     </div>
+    </div>
+
     ${isAdmin?`
      <div class="match-admin">
       <button class="danger delete-match" data-i="${i}">Удалить матч</button>
@@ -345,10 +440,28 @@ function renderMatches(){
  }).join("");
 }
 
+function renderRosterOptions(){
+ const redBox=$("redPlayerOptions");
+ const blueBox=$("bluePlayerOptions");
+ if(!data.players.length){
+  redBox.innerHTML=blueBox.innerHTML='<span class="muted">Сначала добавьте игроков.</span>';
+  return;
+ }
+ const makeOptions=team=>data.players.map((p,i)=>`
+  <label class="player-option">
+   <input type="checkbox" class="roster-check" data-team="${team}" value="${i}">
+   <span>${esc(p.name)}</span>
+  </label>
+ `).join("");
+ redBox.innerHTML=makeOptions("red");
+ blueBox.innerHTML=makeOptions("blue");
+}
+
 function render(){
  renderStats();
  renderPlayers();
  renderMatches();
+ renderRosterOptions();
  $("addPlayerForm").classList.toggle("hidden",!isAdmin);
  $("addMatchForm").classList.toggle("hidden",!isAdmin);
  $("loginButton").classList.toggle("hidden",isAdmin);
@@ -363,15 +476,8 @@ async function load(){
  status("Загружаем данные...");
  const {data:row,error}=await db.from("team_state")
   .select("payload").eq("id",1).maybeSingle();
-
- if(error){
-  status("Ошибка загрузки: "+error.message);
-  return;
- }
- if(!row){
-  status("В базе не найдена запись id=1.");
-  return;
- }
+ if(error){status("Ошибка загрузки: "+error.message);return;}
+ if(!row){status("В базе не найдена запись id=1.");return;}
  data=row.payload||{players:[],matches:[]};
  if(!Array.isArray(data.players))data.players=[];
  if(!Array.isArray(data.matches))data.matches=[];
@@ -393,11 +499,7 @@ async function save(){
 
 async function refreshAuth(){
  const {data:result,error}=await db.auth.getUser();
- if(error){
-  isAdmin=false;
-  render();
-  return;
- }
+ if(error){isAdmin=false;render();return;}
  const user=result?.user;
  isAdmin=!!user&&user.id===ADMIN_ID;
  if(user&&!isAdmin){
@@ -458,6 +560,10 @@ $("playerGrid").addEventListener("click",async e=>{
 $("addPlayer").onclick=async()=>{
  const name=$("newName").value.trim();
  if(!name){alert("Введите имя игрока.");return;}
+ if(data.players.some(p=>samePlayer(p.name,name))){
+  alert("Игрок с таким именем уже существует.");
+  return;
+ }
  const fields=["newAttack","newReceive","newServe"];
  const values=fields.map(id=>$(id).value);
  if(values.some(v=>!validRating(v))){
@@ -479,6 +585,7 @@ $("addMatch").onclick=async()=>{
  const date=$("matchDate").value;
  const r=$("redScore").value;
  const b=$("blueScore").value;
+
  if(!date||r===""||b===""){
   alert("Укажите дату и счёт.");
   return;
@@ -488,14 +595,35 @@ $("addMatch").onclick=async()=>{
   alert("Введите корректный счёт.");
   return;
  }
+
+ const redIndexes=[...document.querySelectorAll('.roster-check[data-team="red"]:checked')].map(x=>Number(x.value));
+ const blueIndexes=[...document.querySelectorAll('.roster-check[data-team="blue"]:checked')].map(x=>Number(x.value));
+
+ if(!redIndexes.length||!blueIndexes.length){
+  alert("Выберите хотя бы одного игрока в каждую команду.");
+  return;
+ }
+
+ const redPlayers=redIndexes.map(i=>data.players[i].name);
+ const bluePlayers=blueIndexes.map(i=>data.players[i].name);
+ const redSet=new Set(redPlayers.map(normalizeName));
+ if(bluePlayers.some(name=>redSet.has(normalizeName(name)))){
+  alert("Один игрок не может быть одновременно в двух командах.");
+  return;
+ }
+
  data.matches.push({
   date,red,blue,
-  winner:red>blue?"Красные":blue>red?"Синие":"Ничья"
+  winner:red>blue?"Красные":blue>red?"Синие":"Ничья",
+  redPlayers,
+  bluePlayers
  });
- render();
- await save();
+
  $("redScore").value="";
  $("blueScore").value="";
+ document.querySelectorAll(".roster-check").forEach(x=>x.checked=false);
+ render();
+ await save();
 };
 
 $("matchesList").addEventListener("click",async e=>{
@@ -506,6 +634,16 @@ $("matchesList").addEventListener("click",async e=>{
   render();
   await save();
  }
+});
+
+// Не разрешаем выбрать одного игрока одновременно в обе команды.
+document.addEventListener("change",e=>{
+ if(!e.target.classList.contains("roster-check")||!e.target.checked)return;
+ const team=e.target.dataset.team;
+ const other=team==="red"?"blue":"red";
+ const value=e.target.value;
+ const otherCheckbox=document.querySelector('.roster-check[data-team="'+other+'"][value="'+value+'"]');
+ if(otherCheckbox)otherCheckbox.checked=false;
 });
 
 document.querySelectorAll(".tab").forEach(btn=>{
@@ -520,14 +658,12 @@ document.querySelectorAll(".tab").forEach(btn=>{
 async function start(){
  await refreshAuth();
  await load();
-
  db.channel("team-state-changes")
   .on("postgres_changes",
    {event:"UPDATE",schema:"public",table:"team_state"},
    async()=>{if(!busy)await load();}
   ).subscribe();
 }
-
 start();
 </script>
 </body>
