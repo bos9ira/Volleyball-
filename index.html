@@ -49,6 +49,9 @@ main{max-width:1100px;margin:25px auto;padding:0 16px}
 .player-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
 .player-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
 .player-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.player-identity{display:flex;align-items:center;gap:11px;min-width:0}
+.avatar{width:58px;height:58px;flex-shrink:0;border-radius:50%;object-fit:cover;background:#263750;border:2px solid #354862}
+.avatar-placeholder{display:grid;place-items:center;font-size:25px}
 .player-name{font-size:16px;font-weight:700;overflow-wrap:anywhere}
 .player-rank{font-size:11px;color:var(--muted);margin-top:5px}
 .rating{width:52px;height:52px;flex-shrink:0;border-radius:13px;background:#173d3a;border:1px solid #236b5b;display:grid;place-items:center;color:var(--green);font-size:19px;font-weight:800}
@@ -60,9 +63,13 @@ main{max-width:1100px;margin:25px auto;padding:0 16px}
 .player-edit{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:13px}
 .player-edit label{font-size:10px;color:var(--muted)}
 .player-edit input{width:100%;margin-top:5px}
+.avatar-edit{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.avatar-edit label{font-size:11px;color:var(--muted);display:block;margin-bottom:7px}
+.avatar-edit input{width:100%;font-size:11px;padding:7px}
 input{background:#091526;color:white;border:1px solid #354862;border-radius:8px;padding:10px;min-width:0}
 input:focus{outline:1px solid var(--blue)}
 input[type=number]{width:100%}
+input[type=checkbox]{accent-color:var(--green)}
 .search{width:100%;max-width:300px}
 .form-panel{background:var(--panel2);border:1px solid var(--line);border-radius:13px;padding:15px;margin:15px 0}
 .form-panel h4{margin:0 0 12px}
@@ -106,15 +113,32 @@ input[type=number]{width:100%}
 .team-select.blue h5{color:#72aaff}
 .player-options{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .player-option{display:flex;align-items:center;gap:7px;font-size:12px;color:#dce8fa;min-width:0}
-.player-option input{width:16px;height:16px;flex-shrink:0;margin:0;accent-color:var(--green)}
+.player-option input{width:16px;height:16px;flex-shrink:0;margin:0}
 .form-hint{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5}
-.form-actions{margin-top:13px}
+.form-actions{margin-top:13px;display:flex;flex-wrap:wrap;gap:8px}
+.attendance-panel{background:#0b1728;border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:14px}
+.attendance-panel h5{margin:0 0 10px;font-size:13px}
+.attendance-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.attendance-option{display:flex;align-items:center;gap:7px;font-size:12px;color:#dce8fa}
+.attendance-option input{width:16px;height:16px;margin:0}
+.attendance-summary{font-size:11px;color:var(--muted);margin-top:9px}
+.attendance-table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:12px;overflow:hidden}
+.attendance-table th,.attendance-table td{padding:12px 10px;text-align:left;border-bottom:1px solid var(--line);font-size:12px}
+.attendance-table th{color:var(--muted);font-weight:600}
+.attendance-table tr:last-child td{border-bottom:0}
+.attendance-table td strong{font-size:14px}
+.attendance-bar{height:7px;background:#263750;border-radius:8px;overflow:hidden;min-width:60px}
+.attendance-bar span{display:block;height:100%;background:linear-gradient(90deg,#3988ff,#20d69b)}
+.attendance-player{display:flex;align-items:center;gap:9px}
+.attendance-player img{width:32px;height:32px;border-radius:50%;object-fit:cover;background:#263750}
+.attendance-player .mini-avatar{width:32px;height:32px;border-radius:50%;background:#263750;display:grid;place-items:center}
 .hidden{display:none!important}
 footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
 @media(max-width:760px){
  .player-grid{grid-template-columns:repeat(2,1fr)}
  .stats{grid-template-columns:repeat(2,1fr)}
  .hero h2{font-size:23px}
+ .attendance-grid{grid-template-columns:repeat(2,1fr)}
 }
 @media(max-width:480px){
  .player-grid{grid-template-columns:1fr}
@@ -128,6 +152,9 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
  .team{font-size:11px}
  .match-rosters,.roster-selects{grid-template-columns:1fr}
  .player-options{grid-template-columns:1fr 1fr}
+ .attendance-grid{grid-template-columns:1fr 1fr}
+ .attendance-table th,.attendance-table td{padding:9px 6px;font-size:10px}
+ .attendance-player img,.attendance-player .mini-avatar{width:27px;height:27px}
 }
 </style>
 </head>
@@ -181,6 +208,7 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
  <nav class="tabs">
   <button class="tab active" data-tab="players">Игроки</button>
   <button class="tab" data-tab="matches">Матчи</button>
+  <button class="tab" data-tab="attendance">Посещаемость</button>
  </nav>
 
  <section class="section active" id="players">
@@ -222,6 +250,20 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
     <input id="blueScore" type="number" min="0" placeholder="Очки синих">
    </div>
 
+   <div class="attendance-panel">
+    <h5>👥 Кто пришёл на игру?</h5>
+    <div id="attendanceOptions" class="attendance-grid"></div>
+    <div class="attendance-summary" id="attendanceCount">Выбрано: 0 игроков</div>
+   </div>
+
+   <div class="form-actions">
+    <button id="autoTeams">⚖️ Сформировать команды по силе</button>
+    <button id="clearTeams" class="secondary">Очистить составы</button>
+   </div>
+   <div class="form-hint">
+    Сначала отметь всех пришедших игроков. Автоматическое распределение постарается уравнять команды по общему рейтингу, нападению, приёму и подаче. После распределения составы можно изменить вручную.
+   </div>
+
    <div class="roster-selects">
     <div class="team-select red">
      <h5>🔴 Состав красных</h5>
@@ -232,11 +274,21 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
      <div id="bluePlayerOptions" class="player-options"></div>
     </div>
    </div>
-   <div class="form-hint">Выбери игроков, которые участвовали в матче. Один игрок не может находиться сразу в двух командах. Для сохранения необходимо выбрать составы обеих команд.</div>
+   <div class="form-hint">Все отмеченные как присутствующие игроки должны быть распределены в одну из команд. Один игрок не может находиться сразу в двух командах.</div>
    <div class="form-actions">
     <button id="addMatch">Сохранить матч</button>
    </div>
   </div>
+ </section>
+
+ <section class="section" id="attendance">
+  <div class="section-head">
+   <div>
+    <h3>Посещаемость игроков</h3>
+    <div class="muted">Кто чаще всего приходит на волейбол</div>
+   </div>
+  </div>
+  <div id="attendanceContent"></div>
  </section>
 </main>
 
@@ -246,6 +298,7 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
 const SUPABASE_URL="https://qautfnjsklvzjkihzfrr.supabase.co";
 const SUPABASE_KEY="sb_publishable_ZF5RcY1bBm2-QV9L2e0qLg_OmDwjUs4";
 const ADMIN_ID="de2354d3-3896-4dcf-bf4a-353b633fc3c5";
+const AVATAR_BUCKET="player-avatars";
 
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
@@ -275,16 +328,10 @@ function validRating(v){
  return Number.isInteger(n)&&n>=0&&n<=10;
 }
 
-// Нормализация имён игроков.
 function normalizeName(name){
- let n=String(name||"")
-  .trim()
-  .toLowerCase()
-  .replace(/ё/g,"е")
-  .replace(/\s+/g," ");
-
+ let n=String(name||"").trim().toLowerCase()
+  .replace(/ё/g,"е").replace(/\s+/g," ");
  if(n==="лена крохина")n="елена крохина";
-
  return n;
 }
 
@@ -293,35 +340,19 @@ function samePlayer(a,b){
 }
 
 function getWinner(m){
- if(m.winner==="Красные"||m.winner==="Синие"||m.winner==="Ничья"){
-  return m.winner;
- }
-
- const r=Number(m.red);
- const b=Number(m.blue);
-
+ if(m.winner==="Красные"||m.winner==="Синие"||m.winner==="Ничья")return m.winner;
+ const r=Number(m.red),b=Number(m.blue);
  return r>b?"Красные":b>r?"Синие":"Ничья";
 }
 
-// Проверенные составы матча 12 ноября 2026 года.
-// Используем их как основной источник для этого матча,
-// даже если в старой записи базы состав одной команды отсутствует.
 const NOVEMBER_12_RED=[
- "Илья",
- "Максим",
- "Лена Крохина",
- "Евгений Буданов",
- "Марат Юсупов",
- "Сергей Карташов"
+ "Илья","Максим","Лена Крохина",
+ "Евгений Буданов","Марат Юсупов","Сергей Карташов"
 ];
 
 const NOVEMBER_12_BLUE=[
- "Сергей Малявкин",
- "Вова",
- "Ксюша",
- "Семён",
- "Евгений Мойсук",
- "Виталий"
+ "Сергей Малявкин","Вова","Ксюша",
+ "Семён","Евгений Мойсук","Виталий"
 ];
 
 function isNovember12Match(m){
@@ -330,100 +361,88 @@ function isNovember12Match(m){
 
 function roster(m,team){
  if(isNovember12Match(m)){
-  return team==="red"
-   ?NOVEMBER_12_RED
-   :NOVEMBER_12_BLUE;
+  return team==="red"?NOVEMBER_12_RED:NOVEMBER_12_BLUE;
  }
-
  const value=team==="red"?m.redPlayers:m.bluePlayers;
-
  if(Array.isArray(value))return value;
-
- // Поддержка старых записей, где состав мог сохраниться строкой JSON.
  if(typeof value==="string"){
   try{
    const parsed=JSON.parse(value);
    return Array.isArray(parsed)?parsed:[];
-  }catch(e){
-   return [];
-  }
+  }catch(e){return [];}
  }
-
  return [];
 }
 
-// Исправленный подсчёт личной статистики.
+function attendanceOf(m){
+ if(Array.isArray(m.attendance))return m.attendance;
+ return [...new Set([...roster(m,"red"),...roster(m,"blue")])];
+}
+
 function playerStats(playerName){
- let played=0;
- let wins=0;
- let losses=0;
- let history=[];
+ let played=0,wins=0,losses=0,history=[];
 
  data.matches.forEach(m=>{
-  const red=roster(m,"red");
-  const blue=roster(m,"blue");
-
+  const red=roster(m,"red"),blue=roster(m,"blue");
   const inRed=red.some(n=>samePlayer(n,playerName));
   const inBlue=blue.some(n=>samePlayer(n,playerName));
-
   if(!inRed&&!inBlue)return;
 
   played++;
-
   const winner=getWinner(m);
   let result="Неизвестно";
 
-  if(winner==="Ничья"){
-   result="Ничья";
-  }else if(
-   (inRed&&winner==="Красные")||
-   (inBlue&&winner==="Синие")
-  ){
-   wins++;
-   result="Победа";
-  }else if(
-   (inRed&&winner==="Синие")||
-   (inBlue&&winner==="Красные")
-  ){
-   losses++;
-   result="Поражение";
+  if(winner==="Ничья")result="Ничья";
+  else if((inRed&&winner==="Красные")||(inBlue&&winner==="Синие")){
+   wins++;result="Победа";
+  }else if((inRed&&winner==="Синие")||(inBlue&&winner==="Красные")){
+   losses++;result="Поражение";
   }
 
   history.push({
    date:m.date||"Дата не указана",
-   red:m.red,
-   blue:m.blue,
-   result
+   red:m.red,blue:m.blue,result
   });
  });
 
  const decided=wins+losses;
-
  return {
-  played,
-  wins,
-  losses,
+  played,wins,losses,
   percent:decided?Math.round(wins/decided*100):0,
   history
+ };
+}
+
+function attendanceStats(playerName){
+ let attended=0;
+ data.matches.forEach(m=>{
+  if(attendanceOf(m).some(n=>samePlayer(n,playerName)))attended++;
+ });
+ const total=data.matches.length;
+ return {
+  attended,total,
+  percent:total?Math.round(attended/total*100):0
  };
 }
 
 function renderStats(){
  $("playersCount").textContent=data.players.length;
  $("matchesCount").textContent=data.matches.length;
-
- let red=0;
- let blue=0;
-
+ let red=0,blue=0;
  data.matches.forEach(m=>{
   const winner=getWinner(m);
-
   if(winner==="Красные")red++;
   if(winner==="Синие")blue++;
  });
-
  $("redWins").textContent=red;
  $("blueWins").textContent=blue;
+}
+
+function avatarHTML(p,extra=""){
+ if(p.avatar){
+  return `<img class="avatar ${extra}" src="${esc(p.avatar)}" alt="${esc(p.name)}" loading="lazy">`;
+ }
+ return `<div class="avatar avatar-placeholder ${extra}">🏐</div>`;
 }
 
 function renderPlayers(){
@@ -433,9 +452,7 @@ function renderPlayers(){
  const sorted=data.players.map((p,i)=>({...p,_i:i}))
   .sort((a,b)=>Number(avg(b))-Number(avg(a)));
 
- const filtered=sorted.filter(p=>
-  p.name.toLowerCase().includes(query)
- );
+ const filtered=sorted.filter(p=>p.name.toLowerCase().includes(query));
 
  if(!filtered.length){
   grid.innerHTML='<div class="empty">Игроки не найдены.</div>';
@@ -445,19 +462,20 @@ function renderPlayers(){
  grid.innerHTML=filtered.map((p,index)=>{
   const i=p._i;
   const skills=[
-   ["Нападение","attack"],
-   ["Приём","receive"],
-   ["Подача","serve"]
+   ["Нападение","attack"],["Приём","receive"],["Подача","serve"]
   ];
-
   const stats=playerStats(p.name);
+  const attendance=attendanceStats(p.name);
 
   return `
    <article class="player-card">
     <div class="player-top">
-     <div>
-      <div class="player-name">${esc(p.name)}</div>
-      <div class="player-rank">Место в рейтинге: #${index+1}</div>
+     <div class="player-identity">
+      ${avatarHTML(p)}
+      <div>
+       <div class="player-name">${esc(p.name)}</div>
+       <div class="player-rank">Место в рейтинге: #${index+1}</div>
+      </div>
      </div>
      <div class="rating" style="color:${ratingColor(Number(avg(p)))}">${avg(p)}</div>
     </div>
@@ -465,47 +483,37 @@ function renderPlayers(){
     ${skills.map(([label,key])=>`
      <div class="skill">
       <div class="skill-row">
-       <span>${label}</span>
-       <strong>${Number(p[key])}/10</strong>
+       <span>${label}</span><strong>${Number(p[key])}/10</strong>
       </div>
-      <div class="track">
-       <div class="fill" style="width:${Number(p[key])*10}%"></div>
-      </div>
+      <div class="track"><div class="fill" style="width:${Number(p[key])*10}%"></div></div>
      </div>
     `).join("")}
 
     <div class="player-stats">
-     <div class="player-stat">
-      <strong>${stats.played}</strong>
-      <span>МАТЧЕЙ</span>
+     <div class="player-stat"><strong>${stats.played}</strong><span>МАТЧЕЙ</span></div>
+     <div class="player-stat"><strong style="color:var(--green)">${stats.wins}</strong><span>ПОБЕД</span></div>
+     <div class="player-stat"><strong style="color:var(--red)">${stats.losses}</strong><span>ПОРАЖЕНИЙ</span></div>
+     <div class="player-stat"><strong>${stats.percent}%</strong><span>ПОБЕД</span></div>
+    </div>
+
+    <div class="player-stats">
+     <div class="player-stat" style="grid-column:span 2">
+      <strong>${attendance.attended}</strong><span>ПОСЕЩЕНИЙ</span>
      </div>
-     <div class="player-stat">
-      <strong style="color:var(--green)">${stats.wins}</strong>
-      <span>ПОБЕД</span>
-     </div>
-     <div class="player-stat">
-      <strong style="color:var(--red)">${stats.losses}</strong>
-      <span>ПОРАЖЕНИЙ</span>
-     </div>
-     <div class="player-stat">
-      <strong>${stats.percent}%</strong>
-      <span>ПОБЕД</span>
+     <div class="player-stat" style="grid-column:span 2">
+      <strong>${attendance.percent}%</strong><span>ПОСЕЩАЕМОСТЬ</span>
      </div>
     </div>
 
     <details class="player-history">
      <summary>История матчей (${stats.history.length})</summary>
-
      ${stats.history.length
       ?stats.history.slice().reverse().map(h=>`
        <div class="history-item">
         ${esc(h.date)} · ${esc(h.red)}:${esc(h.blue)} —
         <strong class="${
-         h.result==="Победа"
-          ?"history-win"
-          :h.result==="Поражение"
-           ?"history-loss"
-           :"history-unknown"
+         h.result==="Победа"?"history-win":
+         h.result==="Поражение"?"history-loss":"history-unknown"
         }">${h.result}</strong>
        </div>
       `).join("")
@@ -517,16 +525,15 @@ function renderPlayers(){
      <div class="player-edit">
       ${skills.map(([label,key])=>`
        <label>${label}
-        <input
-         type="number"
-         min="0"
-         max="10"
-         value="${Number(p[key])}"
-         data-player="${i}"
-         data-field="${key}"
-        >
+        <input type="number" min="0" max="10"
+         value="${Number(p[key])}" data-player="${i}" data-field="${key}">
        </label>
       `).join("")}
+     </div>
+     <div class="avatar-edit">
+      <label>📷 Фотография игрока</label>
+      <input type="file" accept="image/*" class="avatar-upload" data-player="${i}">
+      <div class="muted" style="margin-top:5px">JPG, PNG или WebP. Рекомендуется квадратное фото.</div>
      </div>
      <button class="danger delete-player" data-i="${i}" style="margin-top:12px;width:100%">
       Удалить игрока
@@ -538,7 +545,6 @@ function renderPlayers(){
 
 function renderMatches(){
  const list=$("matchesList");
-
  if(!data.matches.length){
   list.innerHTML='<div class="empty">Матчей пока нет.</div>';
   return;
@@ -548,44 +554,38 @@ function renderMatches(){
   const winner=getWinner(m);
   const redWin=winner==="Красные";
   const blueWin=winner==="Синие";
-
   const redPlayers=roster(m,"red");
   const bluePlayers=roster(m,"blue");
+  const attendance=attendanceOf(m);
 
   return `
    <article class="match-card">
     <div class="match-date">${esc(m.date||"Дата не указана")}</div>
-
     <div class="scoreline">
      <span class="team">🔴 КРАСНЫЕ</span>
      <span class="score">
-      <span class="${redWin?"winner":""}">${esc(m.red)}</span>
-      :
+      <span class="${redWin?"winner":""}">${esc(m.red)}</span>:
       <span class="${blueWin?"winner":""}">${esc(m.blue)}</span>
      </span>
      <span class="team">🔵 СИНИЕ</span>
     </div>
-
     <div class="match-result">
      ${redWin?"ПОБЕДА КРАСНЫХ":blueWin?"ПОБЕДА СИНИХ":"НИЧЬЯ"}
     </div>
-
     <div class="match-rosters">
      <div class="roster-box">
       <div class="roster-title red">🔴 СОСТАВ КРАСНЫХ</div>
-      <div class="roster-names">
-       ${redPlayers.length?redPlayers.map(esc).join(", "):"Состав не указан"}
-      </div>
+      <div class="roster-names">${redPlayers.length?redPlayers.map(esc).join(", "):"Состав не указан"}</div>
      </div>
-
      <div class="roster-box">
       <div class="roster-title blue">🔵 СОСТАВ СИНИХ</div>
-      <div class="roster-names">
-       ${bluePlayers.length?bluePlayers.map(esc).join(", "):"Состав не указан"}
-      </div>
+      <div class="roster-names">${bluePlayers.length?bluePlayers.map(esc).join(", "):"Состав не указан"}</div>
      </div>
     </div>
-
+    <div class="roster-box" style="margin-top:10px">
+     <div class="roster-title">👥 ПРИСУТСТВОВАЛИ (${attendance.length})</div>
+     <div class="roster-names">${attendance.length?attendance.map(esc).join(", "):"Нет данных"}</div>
+    </div>
     ${isAdmin?`
      <div class="match-admin">
       <button class="danger delete-match" data-i="${i}">Удалить матч</button>
@@ -598,22 +598,90 @@ function renderMatches(){
 function renderRosterOptions(){
  const redBox=$("redPlayerOptions");
  const blueBox=$("bluePlayerOptions");
+ const attendanceBox=$("attendanceOptions");
 
  if(!data.players.length){
-  redBox.innerHTML=blueBox.innerHTML=
+  redBox.innerHTML=blueBox.innerHTML=attendanceBox.innerHTML=
    '<span class="muted">Сначала добавьте игроков.</span>';
   return;
  }
 
- const makeOptions=team=>data.players.map((p,i)=>`
+ const makeTeamOptions=team=>data.players.map((p,i)=>`
   <label class="player-option">
    <input type="checkbox" class="roster-check" data-team="${team}" value="${i}">
    <span>${esc(p.name)}</span>
   </label>
  `).join("");
 
- redBox.innerHTML=makeOptions("red");
- blueBox.innerHTML=makeOptions("blue");
+ const makeAttendanceOptions=()=>data.players.map((p,i)=>`
+  <label class="attendance-option">
+   <input type="checkbox" class="attendance-check" value="${i}">
+   <span>${esc(p.name)}</span>
+  </label>
+ `).join("");
+
+ redBox.innerHTML=makeTeamOptions("red");
+ blueBox.innerHTML=makeTeamOptions("blue");
+ attendanceBox.innerHTML=makeAttendanceOptions();
+ updateAttendanceCount();
+}
+
+function updateAttendanceCount(){
+ const count=document.querySelectorAll(".attendance-check:checked").length;
+ $("attendanceCount").textContent=`Выбрано: ${count} игроков`;
+}
+
+function renderAttendance(){
+ const box=$("attendanceContent");
+ if(!data.players.length){
+  box.innerHTML='<div class="empty">Пока нет игроков.</div>';
+  return;
+ }
+
+ const rows=data.players.map(p=>({
+  player:p,
+  ...attendanceStats(p.name)
+ })).sort((a,b)=>b.attended-a.attended||b.percent-a.percent);
+
+ const total=data.matches.length;
+
+ box.innerHTML=`
+  <div class="stats" style="margin-bottom:15px">
+   <div class="stat">
+    <div class="stat-label">Всего матчей</div>
+    <div class="stat-value blue">${total}</div>
+   </div>
+   <div class="stat">
+    <div class="stat-label">Игроков в списке</div>
+    <div class="stat-value">${data.players.length}</div>
+   </div>
+  </div>
+  <div style="overflow-x:auto">
+   <table class="attendance-table">
+    <thead><tr>
+     <th>Игрок</th><th>Пришёл</th><th>Посещаемость</th><th>Прогресс</th>
+    </tr></thead>
+    <tbody>
+     ${rows.map((r,index)=>`
+      <tr>
+       <td>
+        <div class="attendance-player">
+         ${r.player.avatar
+          ?`<img src="${esc(r.player.avatar)}" alt="">`
+          :'<span class="mini-avatar">🏐</span>'}
+         <span>${index===0&&r.attended>0?"🥇 ": ""}${esc(r.player.name)}</span>
+        </div>
+       </td>
+       <td><strong>${r.attended}/${total}</strong></td>
+       <td><strong>${r.percent}%</strong></td>
+       <td><div class="attendance-bar"><span style="width:${r.percent}%"></span></div></td>
+      </tr>
+     `).join("")}
+    </tbody>
+   </table>
+  </div>
+  <div class="form-hint">Посещаемость рассчитывается по сохранённым составам матчей. Для старых матчей учитываются игроки, записанные в составах красной и синей команд.</div>
+ `;
 }
 
 function render(){
@@ -621,104 +689,66 @@ function render(){
  renderPlayers();
  renderMatches();
  renderRosterOptions();
+ renderAttendance();
 
  $("addPlayerForm").classList.toggle("hidden",!isAdmin);
  $("addMatchForm").classList.toggle("hidden",!isAdmin);
  $("loginButton").classList.toggle("hidden",isAdmin);
  $("logoutButton").classList.toggle("hidden",!isAdmin);
  $("adminLabel").classList.toggle("hidden",!isAdmin);
-
  $("authText").textContent=isAdmin
   ?"Вы вошли как администратор. Изменения доступны только вам."
   :"Статистика открыта для просмотра всем участникам.";
 }
 
-// Загрузка данных.
 async function load(){
  status("Загружаем данные...");
-
  const {data:row,error}=await db.from("team_state")
-  .select("payload")
-  .eq("id",1)
-  .maybeSingle();
+  .select("payload").eq("id",1).maybeSingle();
 
- if(error){
-  status("Ошибка загрузки: "+error.message);
-  return;
- }
-
- if(!row){
-  status("В базе не найдена запись id=1.");
-  return;
- }
+ if(error){status("Ошибка загрузки: "+error.message);return;}
+ if(!row){status("В базе не найдена запись id=1.");return;}
 
  data=row.payload||{players:[],matches:[]};
-
  if(!Array.isArray(data.players))data.players=[];
  if(!Array.isArray(data.matches))data.matches=[];
 
- // Исправляем сохранённые составы матча 12 ноября.
  let migrated=false;
-
  const oldMatch=data.matches.find(isNovember12Match);
 
  if(oldMatch){
-  const redChanged=
-   JSON.stringify(oldMatch.redPlayers||[])!==JSON.stringify(NOVEMBER_12_RED);
-
-  const blueChanged=
-   JSON.stringify(oldMatch.bluePlayers||[])!==JSON.stringify(NOVEMBER_12_BLUE);
-
-  if(redChanged){
-   oldMatch.redPlayers=[...NOVEMBER_12_RED];
-   migrated=true;
+  if(JSON.stringify(oldMatch.redPlayers||[])!==JSON.stringify(NOVEMBER_12_RED)){
+   oldMatch.redPlayers=[...NOVEMBER_12_RED];migrated=true;
   }
-
-  if(blueChanged){
-   oldMatch.bluePlayers=[...NOVEMBER_12_BLUE];
-   migrated=true;
+  if(JSON.stringify(oldMatch.bluePlayers||[])!==JSON.stringify(NOVEMBER_12_BLUE)){
+   oldMatch.bluePlayers=[...NOVEMBER_12_BLUE];migrated=true;
   }
  }
 
  render();
  status("Данные успешно загружены.");
 
- // Сохраняем исправленные составы в базе, если вошёл администратор.
- if(migrated&&isAdmin){
-  await save();
- }else if(migrated){
-  status("Составы восстановлены для отображения. Войдите как администратор, чтобы сохранить исправление в базе.");
- }
+ if(migrated&&isAdmin)await save();
+ else if(migrated)status("Составы восстановлены для отображения. Войдите как администратор, чтобы сохранить исправление в базе.");
 }
 
 async function save(){
  if(!isAdmin||busy)return;
-
  busy=true;
  status("Сохраняем изменения...");
 
  const {error}=await db.from("team_state")
-  .update({
-   payload:data,
-   updated_at:new Date().toISOString()
-  })
+  .update({payload:data,updated_at:new Date().toISOString()})
   .eq("id",1);
 
  busy=false;
-
  if(error)status("Ошибка сохранения: "+error.message);
  else status("Изменения сохранены.");
 }
 
 async function refreshAuth(){
  const {data:result,error}=await db.auth.getUser();
-
- if(error){
-  isAdmin=false;
-  render();
-  return;
- }
-
+ if(error){isAdmin=false;render();return;}
  const user=result?.user;
  isAdmin=!!user&&user.id===ADMIN_ID;
 
@@ -726,46 +756,107 @@ async function refreshAuth(){
   await db.auth.signOut();
   status("У аккаунта нет прав администратора.");
  }
-
  render();
 }
 
-$("loginButton").onclick=()=>
- $("loginForm").classList.remove("hidden");
+function getCheckedIndexes(selector){
+ return [...document.querySelectorAll(selector+":checked")].map(x=>Number(x.value));
+}
 
-$("cancelLogin").onclick=()=>
- $("loginForm").classList.add("hidden");
+function setTeamSelection(redIndexes,blueIndexes){
+ document.querySelectorAll(".roster-check").forEach(el=>{
+  const i=Number(el.value);
+  el.checked=el.dataset.team==="red"
+   ?redIndexes.includes(i)
+   :blueIndexes.includes(i);
+ });
+}
+
+function teamBalanceScore(redIndexes,blueIndexes){
+ const red=redIndexes.map(i=>data.players[i]);
+ const blue=blueIndexes.map(i=>data.players[i]);
+
+ const sum=(arr,key)=>arr.reduce((s,p)=>s+Number(p[key]||0),0);
+ const overall=arr=>arr.reduce((s,p)=>s+
+  (Number(p.attack||0)+Number(p.receive||0)+Number(p.serve||0))/3,0);
+
+ return Math.abs(overall(red)-overall(blue))*10+
+  Math.abs(sum(red,"attack")-sum(blue,"attack"))+
+  Math.abs(sum(red,"receive")-sum(blue,"receive"))+
+  Math.abs(sum(red,"serve")-sum(blue,"serve"));
+}
+
+function findBalancedTeams(indexes){
+ const n=indexes.length;
+ if(n<2)return null;
+
+ const target=Math.floor(n/2);
+ let best=null;
+ let bestScore=Infinity;
+
+ // Для обычного состава перебираем комбинации и выбираем
+ // вариант с минимальной разницей игровых показателей.
+ if(n<=18){
+  function search(start,chosen){
+   if(chosen.length===target){
+    const chosenSet=new Set(chosen);
+    const red=[...chosen];
+    const blue=indexes.filter(i=>!chosenSet.has(i));
+    const score=teamBalanceScore(red,blue);
+    if(score<bestScore){
+     bestScore=score;
+     best={red,blue};
+    }
+    return;
+   }
+
+   const needed=target-chosen.length;
+   for(let i=start;i<=n-needed;i++){
+    chosen.push(indexes[i]);
+    search(i+1,chosen);
+    chosen.pop();
+   }
+  }
+  search(0,[]);
+  return best;
+ }
+
+ // Для очень больших списков используем последовательное
+ // распределение сильнейших игроков в более слабую команду.
+ const sorted=indexes.slice().sort((a,b)=>
+  Number(avg(data.players[b]))-Number(avg(data.players[a]))
+ );
+ const red=[],blue=[];
+ sorted.forEach((i,index)=>{
+  if(red.length>blue.length)blue.push(i);
+  else if(blue.length>red.length)red.push(i);
+  else if(teamBalanceScore([...red,i],blue)<=teamBalanceScore(red,[...blue,i]))red.push(i);
+  else blue.push(i);
+ });
+ return {red,blue};
+}
+
+$("loginButton").onclick=()=>$("loginForm").classList.remove("hidden");
+$("cancelLogin").onclick=()=>$("loginForm").classList.add("hidden");
 
 $("submitLogin").onclick=async()=>{
  const email=$("email").value.trim();
  const password=$("password").value;
-
- if(!email||!password){
-  status("Введите почту и пароль.");
-  return;
- }
+ if(!email||!password){status("Введите почту и пароль.");return;}
 
  status("Проверяем вход...");
-
  const {error}=await db.auth.signInWithPassword({email,password});
-
- if(error){
-  status("Ошибка входа: "+error.message);
-  return;
- }
+ if(error){status("Ошибка входа: "+error.message);return;}
 
  await refreshAuth();
  await load();
-
  $("loginForm").classList.add("hidden");
 };
 
 $("logoutButton").onclick=async()=>{
  await db.auth.signOut();
-
  isAdmin=false;
  render();
-
  status("Вы вышли из режима администратора.");
 };
 
@@ -774,26 +865,59 @@ $("searchPlayers").addEventListener("input",renderPlayers);
 $("playerGrid").addEventListener("change",async e=>{
  const el=e.target;
 
- if(!el.dataset.field)return;
+ if(el.classList.contains("avatar-upload")){
+  const i=Number(el.dataset.player);
+  const file=el.files?.[0];
+  if(!file)return;
 
+  if(!file.type.startsWith("image/")){
+   alert("Выбери файл изображения.");
+   el.value="";
+   return;
+  }
+  if(file.size>5*1024*1024){
+   alert("Размер фотографии не должен превышать 5 МБ.");
+   el.value="";
+   return;
+  }
+
+  status("Загружаем фотографию...");
+  const extension=(file.name.split(".").pop()||"jpg").replace(/[^a-z0-9]/gi,"");
+  const path=`player-${i}-${Date.now()}.${extension}`;
+
+  const {error:uploadError}=await db.storage
+   .from(AVATAR_BUCKET)
+   .upload(path,file,{upsert:true,contentType:file.type});
+
+  if(uploadError){
+   status("Ошибка загрузки фотографии: "+uploadError.message);
+   alert("Не удалось загрузить фото. Проверь настройки Storage и политики доступа.");
+   return;
+  }
+
+  const {data:urlData}=db.storage.from(AVATAR_BUCKET).getPublicUrl(path);
+  data.players[i].avatar=urlData.publicUrl;
+  render();
+  await save();
+  return;
+ }
+
+ if(!el.dataset.field)return;
  const i=Number(el.dataset.player);
  const field=el.dataset.field;
 
  if(!validRating(el.value)){
   alert("Оценка должна быть целым числом от 0 до 10.");
-  renderPlayers();
-  return;
+  renderPlayers();return;
  }
 
  data.players[i][field]=Number(el.value);
-
  render();
  await save();
 });
 
 $("playerGrid").addEventListener("click",async e=>{
  if(!e.target.classList.contains("delete-player"))return;
-
  const i=Number(e.target.dataset.i);
 
  if(confirm("Удалить игрока "+data.players[i].name+"?")){
@@ -805,36 +929,66 @@ $("playerGrid").addEventListener("click",async e=>{
 
 $("addPlayer").onclick=async()=>{
  const name=$("newName").value.trim();
-
- if(!name){
-  alert("Введите имя игрока.");
-  return;
- }
-
+ if(!name){alert("Введите имя игрока.");return;}
  if(data.players.some(p=>samePlayer(p.name,name))){
-  alert("Игрок с таким именем уже существует.");
-  return;
+  alert("Игрок с таким именем уже существует.");return;
  }
 
  const fields=["newAttack","newReceive","newServe"];
  const values=fields.map(id=>$(id).value);
-
  if(values.some(v=>!validRating(v))){
-  alert("Все оценки должны быть от 0 до 10.");
-  return;
+  alert("Все оценки должны быть от 0 до 10.");return;
  }
 
  data.players.push({
-  name,
-  attack:Number(values[0]),
-  receive:Number(values[1]),
-  serve:Number(values[2])
+  name,attack:Number(values[0]),receive:Number(values[1]),serve:Number(values[2])
  });
-
  $("newName").value="";
-
  render();
  await save();
+};
+
+$("attendanceOptions").addEventListener("change",updateAttendanceCount);
+
+// Если игрока добавили в состав команды вручную,
+// автоматически отмечаем его присутствие.
+document.addEventListener("change",e=>{
+ if(!e.target.classList.contains("roster-check"))return;
+
+ const index=Number(e.target.value);
+ const attendance=document.querySelector(`.attendance-check[value="${index}"]`);
+
+ if(e.target.checked&&attendance)attendance.checked=true;
+ updateAttendanceCount();
+});
+
+$("autoTeams").onclick=()=>{
+ const indexes=getCheckedIndexes(".attendance-check");
+ if(indexes.length<2){
+  alert("Отметь минимум двух пришедших игроков.");
+  return;
+ }
+
+ const teams=findBalancedTeams(indexes);
+ if(!teams)return;
+
+ setTeamSelection(teams.red,teams.blue);
+ updateAttendanceCount();
+
+ const redNames=teams.red.map(i=>data.players[i].name);
+ const blueNames=teams.blue.map(i=>data.players[i].name);
+
+ alert(
+  "Команды сформированы!\n\n"+
+  "🔴 Красные:\n"+redNames.join(", ")+
+  "\n\n🔵 Синие:\n"+blueNames.join(", ")
+ );
+};
+
+$("clearTeams").onclick=()=>{
+ document.querySelectorAll(".roster-check").forEach(x=>x.checked=false);
+ document.querySelectorAll(".attendance-check").forEach(x=>x.checked=false);
+ updateAttendanceCount();
 };
 
 $("addMatch").onclick=async()=>{
@@ -843,54 +997,52 @@ $("addMatch").onclick=async()=>{
  const b=$("blueScore").value;
 
  if(!date||r===""||b===""){
-  alert("Укажите дату и счёт.");
-  return;
+  alert("Укажите дату и счёт.");return;
  }
 
- const red=Number(r);
- const blue=Number(b);
-
+ const red=Number(r),blue=Number(b);
  if(!Number.isInteger(red)||!Number.isInteger(blue)||red<0||blue<0){
-  alert("Введите корректный счёт.");
-  return;
+  alert("Введите корректный счёт.");return;
  }
 
- const redIndexes=[
-  ...document.querySelectorAll('.roster-check[data-team="red"]:checked')
- ].map(x=>Number(x.value));
-
- const blueIndexes=[
-  ...document.querySelectorAll('.roster-check[data-team="blue"]:checked')
- ].map(x=>Number(x.value));
+ const redIndexes=getCheckedIndexes('.roster-check[data-team="red"]');
+ const blueIndexes=getCheckedIndexes('.roster-check[data-team="blue"]');
+ const attendanceIndexes=getCheckedIndexes(".attendance-check");
 
  if(!redIndexes.length||!blueIndexes.length){
-  alert("Выберите хотя бы одного игрока в каждую команду.");
-  return;
+  alert("Выберите составы обеих команд.");return;
  }
 
  const redPlayers=redIndexes.map(i=>data.players[i].name);
  const bluePlayers=blueIndexes.map(i=>data.players[i].name);
+ const attendance=attendanceIndexes.map(i=>data.players[i].name);
+
+ const assigned=new Set([...redIndexes,...blueIndexes]);
+ const unassigned=attendanceIndexes.filter(i=>!assigned.has(i));
+
+ if(unassigned.length){
+  alert("Распредели всех отмеченных присутствующих по красной или синей команде.");
+  return;
+ }
 
  const redSet=new Set(redPlayers.map(normalizeName));
-
  if(bluePlayers.some(name=>redSet.has(normalizeName(name)))){
   alert("Один игрок не может быть одновременно в двух командах.");
   return;
  }
 
+ // В посещаемость включаем всех выбранных участников.
  data.matches.push({
-  date,
-  red,
-  blue,
+  date,red,blue,
   winner:red>blue?"Красные":blue>red?"Синие":"Ничья",
-  redPlayers,
-  bluePlayers
+  redPlayers,bluePlayers,attendance
  });
 
  $("redScore").value="";
  $("blueScore").value="";
+ $("matchDate").value="";
 
- document.querySelectorAll(".roster-check").forEach(x=>x.checked=false);
+ document.querySelectorAll(".roster-check,.attendance-check").forEach(x=>x.checked=false);
 
  render();
  await save();
@@ -898,7 +1050,6 @@ $("addMatch").onclick=async()=>{
 
 $("matchesList").addEventListener("click",async e=>{
  if(!e.target.classList.contains("delete-match"))return;
-
  const i=Number(e.target.dataset.i);
 
  if(confirm("Удалить этот матч?")){
@@ -908,32 +1059,10 @@ $("matchesList").addEventListener("click",async e=>{
  }
 });
 
-// Не разрешаем выбрать одного игрока одновременно в двух командах.
-document.addEventListener("change",e=>{
- if(!e.target.classList.contains("roster-check")||!e.target.checked)return;
-
- const team=e.target.dataset.team;
- const other=team==="red"?"blue":"red";
- const value=e.target.value;
-
- const otherCheckbox=document.querySelector(
-  '.roster-check[data-team="'+other+'"][value="'+value+'"]'
- );
-
- if(otherCheckbox)otherCheckbox.checked=false;
-});
-
-// Переключение вкладок.
 document.querySelectorAll(".tab").forEach(btn=>{
  btn.onclick=()=>{
-  document.querySelectorAll(".tab").forEach(x=>
-   x.classList.remove("active")
-  );
-
-  document.querySelectorAll(".section").forEach(x=>
-   x.classList.remove("active")
-  );
-
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
   btn.classList.add("active");
   $(btn.dataset.tab).classList.add("active");
  };
@@ -944,17 +1073,11 @@ async function start(){
  await load();
 
  db.channel("team-state-changes")
-  .on(
-   "postgres_changes",
-   {
-    event:"UPDATE",
-    schema:"public",
-    table:"team_state"
-   },
-   async()=>{
-    if(!busy)await load();
-   }
-  )
+  .on("postgres_changes",{
+   event:"UPDATE",schema:"public",table:"team_state"
+  },async()=>{
+   if(!busy)await load();
+  })
   .subscribe();
 }
 
