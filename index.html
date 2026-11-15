@@ -248,6 +248,7 @@ const SUPABASE_KEY="sb_publishable_ZF5RcY1bBm2-QV9L2e0qLg_OmDwjUs4";
 const ADMIN_ID="de2354d3-3896-4dcf-bf4a-353b633fc3c5";
 
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
 let data={players:[],matches:[]};
 let isAdmin=false;
 let busy=false;
@@ -260,69 +261,167 @@ function esc(v){
   "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
  }[c]));
 }
+
 function avg(p){
  return ((Number(p.attack)+Number(p.receive)+Number(p.serve))/3).toFixed(1);
 }
+
 function ratingColor(n){
  return n>=8?"#20d69b":n>=6?"#72aaff":n>=4?"#ffad42":"#ff6474";
 }
+
 function validRating(v){
  const n=Number(v);
  return Number.isInteger(n)&&n>=0&&n<=10;
 }
 
-// Совместимость старого имени «Лена Крохина» с именем игрока «Елена Крохина».
+// Нормализация имён игроков.
 function normalizeName(name){
- let n=String(name||"").trim().toLowerCase().replace(/\s+/g," ");
+ let n=String(name||"")
+  .trim()
+  .toLowerCase()
+  .replace(/ё/g,"е")
+  .replace(/\s+/g," ");
+
  if(n==="лена крохина")n="елена крохина";
+
  return n;
 }
+
 function samePlayer(a,b){
  return normalizeName(a)===normalizeName(b);
 }
+
 function getWinner(m){
- if(m.winner==="Красные"||m.winner==="Синие"||m.winner==="Ничья")return m.winner;
- const r=Number(m.red),b=Number(m.blue);
+ if(m.winner==="Красные"||m.winner==="Синие"||m.winner==="Ничья"){
+  return m.winner;
+ }
+
+ const r=Number(m.red);
+ const b=Number(m.blue);
+
  return r>b?"Красные":b>r?"Синие":"Ничья";
 }
-function roster(m,team){
- const value=team==="red"?m.redPlayers:m.bluePlayers;
- return Array.isArray(value)?value:[];
+
+// Проверенные составы матча 12 ноября 2026 года.
+// Используем их как основной источник для этого матча,
+// даже если в старой записи базы состав одной команды отсутствует.
+const NOVEMBER_12_RED=[
+ "Илья",
+ "Максим",
+ "Лена Крохина",
+ "Евгений Буданов",
+ "Марат Юсупов",
+ "Сергей Карташов"
+];
+
+const NOVEMBER_12_BLUE=[
+ "Сергей Малявкин",
+ "Вова",
+ "Ксюша",
+ "Семён",
+ "Евгений Мойсук",
+ "Виталий"
+];
+
+function isNovember12Match(m){
+ return String(m.date||"").startsWith("2026-11-12");
 }
+
+function roster(m,team){
+ if(isNovember12Match(m)){
+  return team==="red"
+   ?NOVEMBER_12_RED
+   :NOVEMBER_12_BLUE;
+ }
+
+ const value=team==="red"?m.redPlayers:m.bluePlayers;
+
+ if(Array.isArray(value))return value;
+
+ // Поддержка старых записей, где состав мог сохраниться строкой JSON.
+ if(typeof value==="string"){
+  try{
+   const parsed=JSON.parse(value);
+   return Array.isArray(parsed)?parsed:[];
+  }catch(e){
+   return [];
+  }
+ }
+
+ return [];
+}
+
+// Исправленный подсчёт личной статистики.
 function playerStats(playerName){
- let played=0,wins=0,losses=0,history=[];
+ let played=0;
+ let wins=0;
+ let losses=0;
+ let history=[];
+
  data.matches.forEach(m=>{
   const red=roster(m,"red");
   const blue=roster(m,"blue");
+
   const inRed=red.some(n=>samePlayer(n,playerName));
   const inBlue=blue.some(n=>samePlayer(n,playerName));
+
   if(!inRed&&!inBlue)return;
 
   played++;
+
   const winner=getWinner(m);
   let result="Неизвестно";
-  if(winner==="Ничья")result="Ничья";
-  else if((inRed&&winner==="Красные")||(inBlue&&winner==="Синие")){
+
+  if(winner==="Ничья"){
+   result="Ничья";
+  }else if(
+   (inRed&&winner==="Красные")||
+   (inBlue&&winner==="Синие")
+  ){
    wins++;
    result="Победа";
-  }else if((inRed&&winner==="Синие")||(inBlue&&winner==="Красные")){
+  }else if(
+   (inRed&&winner==="Синие")||
+   (inBlue&&winner==="Красные")
+  ){
    losses++;
    result="Поражение";
   }
-  history.push({date:m.date||"Дата не указана",red:m.red,blue:m.blue,result});
+
+  history.push({
+   date:m.date||"Дата не указана",
+   red:m.red,
+   blue:m.blue,
+   result
+  });
  });
- return {played,wins,losses,percent:played?Math.round(wins/(wins+losses)*100)||0:0,history};
+
+ const decided=wins+losses;
+
+ return {
+  played,
+  wins,
+  losses,
+  percent:decided?Math.round(wins/decided*100):0,
+  history
+ };
 }
 
 function renderStats(){
  $("playersCount").textContent=data.players.length;
  $("matchesCount").textContent=data.matches.length;
- let red=0,blue=0;
+
+ let red=0;
+ let blue=0;
+
  data.matches.forEach(m=>{
   const winner=getWinner(m);
+
   if(winner==="Красные")red++;
   if(winner==="Синие")blue++;
  });
+
  $("redWins").textContent=red;
  $("blueWins").textContent=blue;
 }
@@ -330,9 +429,13 @@ function renderStats(){
 function renderPlayers(){
  const grid=$("playerGrid");
  const query=$("searchPlayers").value.trim().toLowerCase();
+
  const sorted=data.players.map((p,i)=>({...p,_i:i}))
   .sort((a,b)=>Number(avg(b))-Number(avg(a)));
- const filtered=sorted.filter(p=>p.name.toLowerCase().includes(query));
+
+ const filtered=sorted.filter(p=>
+  p.name.toLowerCase().includes(query)
+ );
 
  if(!filtered.length){
   grid.innerHTML='<div class="empty">Игроки не найдены.</div>';
@@ -341,7 +444,12 @@ function renderPlayers(){
 
  grid.innerHTML=filtered.map((p,index)=>{
   const i=p._i;
-  const skills=[["Нападение","attack"],["Приём","receive"],["Подача","serve"]];
+  const skills=[
+   ["Нападение","attack"],
+   ["Приём","receive"],
+   ["Подача","serve"]
+  ];
+
   const stats=playerStats(p.name);
 
   return `
@@ -356,37 +464,73 @@ function renderPlayers(){
 
     ${skills.map(([label,key])=>`
      <div class="skill">
-      <div class="skill-row"><span>${label}</span><strong>${Number(p[key])}/10</strong></div>
-      <div class="track"><div class="fill" style="width:${Number(p[key])*10}%"></div></div>
+      <div class="skill-row">
+       <span>${label}</span>
+       <strong>${Number(p[key])}/10</strong>
+      </div>
+      <div class="track">
+       <div class="fill" style="width:${Number(p[key])*10}%"></div>
+      </div>
      </div>
     `).join("")}
 
     <div class="player-stats">
-     <div class="player-stat"><strong>${stats.played}</strong><span>МАТЧЕЙ</span></div>
-     <div class="player-stat"><strong style="color:var(--green)">${stats.wins}</strong><span>ПОБЕД</span></div>
-     <div class="player-stat"><strong style="color:var(--red)">${stats.losses}</strong><span>ПОРАЖЕНИЙ</span></div>
-     <div class="player-stat"><strong>${stats.percent}%</strong><span>ПОБЕД</span></div>
+     <div class="player-stat">
+      <strong>${stats.played}</strong>
+      <span>МАТЧЕЙ</span>
+     </div>
+     <div class="player-stat">
+      <strong style="color:var(--green)">${stats.wins}</strong>
+      <span>ПОБЕД</span>
+     </div>
+     <div class="player-stat">
+      <strong style="color:var(--red)">${stats.losses}</strong>
+      <span>ПОРАЖЕНИЙ</span>
+     </div>
+     <div class="player-stat">
+      <strong>${stats.percent}%</strong>
+      <span>ПОБЕД</span>
+     </div>
     </div>
 
     <details class="player-history">
      <summary>История матчей (${stats.history.length})</summary>
-     ${stats.history.length?stats.history.slice().reverse().map(h=>`
-      <div class="history-item">
-       ${esc(h.date)} · ${esc(h.red)}:${esc(h.blue)} —
-       <strong class="${h.result==="Победа"?"history-win":h.result==="Поражение"?"history-loss":"history-unknown"}">${h.result}</strong>
-      </div>
-     `).join(""):'<div class="history-item">Пока нет матчей с указанным составом.</div>'}
+
+     ${stats.history.length
+      ?stats.history.slice().reverse().map(h=>`
+       <div class="history-item">
+        ${esc(h.date)} · ${esc(h.red)}:${esc(h.blue)} —
+        <strong class="${
+         h.result==="Победа"
+          ?"history-win"
+          :h.result==="Поражение"
+           ?"history-loss"
+           :"history-unknown"
+        }">${h.result}</strong>
+       </div>
+      `).join("")
+      :'<div class="history-item">Пока нет матчей с указанным составом.</div>'
+     }
     </details>
 
     ${isAdmin?`
      <div class="player-edit">
       ${skills.map(([label,key])=>`
        <label>${label}
-        <input type="number" min="0" max="10" value="${Number(p[key])}" data-player="${i}" data-field="${key}">
+        <input
+         type="number"
+         min="0"
+         max="10"
+         value="${Number(p[key])}"
+         data-player="${i}"
+         data-field="${key}"
+        >
        </label>
       `).join("")}
      </div>
-     <button class="danger delete-player" data-i="${i}" style="margin-top:12px;width:100%">Удалить игрока</button>
+     <button class="danger delete-player" data-i="${i}" style="margin-top:12px;width:100%">
+      Удалить игрока
+     </button>
     `:""}
    </article>`;
  }).join("");
@@ -394,6 +538,7 @@ function renderPlayers(){
 
 function renderMatches(){
  const list=$("matchesList");
+
  if(!data.matches.length){
   list.innerHTML='<div class="empty">Матчей пока нет.</div>';
   return;
@@ -403,12 +548,14 @@ function renderMatches(){
   const winner=getWinner(m);
   const redWin=winner==="Красные";
   const blueWin=winner==="Синие";
+
   const redPlayers=roster(m,"red");
   const bluePlayers=roster(m,"blue");
 
   return `
    <article class="match-card">
     <div class="match-date">${esc(m.date||"Дата не указана")}</div>
+
     <div class="scoreline">
      <span class="team">🔴 КРАСНЫЕ</span>
      <span class="score">
@@ -418,16 +565,24 @@ function renderMatches(){
      </span>
      <span class="team">🔵 СИНИЕ</span>
     </div>
-    <div class="match-result">${redWin?"ПОБЕДА КРАСНЫХ":blueWin?"ПОБЕДА СИНИХ":"НИЧЬЯ"}</div>
+
+    <div class="match-result">
+     ${redWin?"ПОБЕДА КРАСНЫХ":blueWin?"ПОБЕДА СИНИХ":"НИЧЬЯ"}
+    </div>
 
     <div class="match-rosters">
      <div class="roster-box">
       <div class="roster-title red">🔴 СОСТАВ КРАСНЫХ</div>
-      <div class="roster-names">${redPlayers.length?redPlayers.map(esc).join(", "):"Состав не указан"}</div>
+      <div class="roster-names">
+       ${redPlayers.length?redPlayers.map(esc).join(", "):"Состав не указан"}
+      </div>
      </div>
+
      <div class="roster-box">
       <div class="roster-title blue">🔵 СОСТАВ СИНИХ</div>
-      <div class="roster-names">${bluePlayers.length?bluePlayers.map(esc).join(", "):"Состав не указан"}</div>
+      <div class="roster-names">
+       ${bluePlayers.length?bluePlayers.map(esc).join(", "):"Состав не указан"}
+      </div>
      </div>
     </div>
 
@@ -443,16 +598,20 @@ function renderMatches(){
 function renderRosterOptions(){
  const redBox=$("redPlayerOptions");
  const blueBox=$("bluePlayerOptions");
+
  if(!data.players.length){
-  redBox.innerHTML=blueBox.innerHTML='<span class="muted">Сначала добавьте игроков.</span>';
+  redBox.innerHTML=blueBox.innerHTML=
+   '<span class="muted">Сначала добавьте игроков.</span>';
   return;
  }
+
  const makeOptions=team=>data.players.map((p,i)=>`
   <label class="player-option">
    <input type="checkbox" class="roster-check" data-team="${team}" value="${i}">
    <span>${esc(p.name)}</span>
   </label>
  `).join("");
+
  redBox.innerHTML=makeOptions("red");
  blueBox.innerHTML=makeOptions("blue");
 }
@@ -462,22 +621,26 @@ function render(){
  renderPlayers();
  renderMatches();
  renderRosterOptions();
+
  $("addPlayerForm").classList.toggle("hidden",!isAdmin);
  $("addMatchForm").classList.toggle("hidden",!isAdmin);
  $("loginButton").classList.toggle("hidden",isAdmin);
  $("logoutButton").classList.toggle("hidden",!isAdmin);
  $("adminLabel").classList.toggle("hidden",!isAdmin);
+
  $("authText").textContent=isAdmin
   ?"Вы вошли как администратор. Изменения доступны только вам."
   :"Статистика открыта для просмотра всем участникам.";
 }
 
-// Загрузка данных и восстановление составов старого матча.
+// Загрузка данных.
 async function load(){
  status("Загружаем данные...");
 
  const {data:row,error}=await db.from("team_state")
-  .select("payload").eq("id",1).maybeSingle();
+  .select("payload")
+  .eq("id",1)
+  .maybeSingle();
 
  if(error){
   status("Ошибка загрузки: "+error.message);
@@ -494,38 +657,25 @@ async function load(){
  if(!Array.isArray(data.players))data.players=[];
  if(!Array.isArray(data.matches))data.matches=[];
 
+ // Исправляем сохранённые составы матча 12 ноября.
  let migrated=false;
 
- // Ищем матч от 12 ноября 2026 года.
- const oldMatch=data.matches.find(m=>
-  String(m.date||"").startsWith("2026-11-12")
- );
+ const oldMatch=data.matches.find(isNovember12Match);
 
  if(oldMatch){
+  const redChanged=
+   JSON.stringify(oldMatch.redPlayers||[])!==JSON.stringify(NOVEMBER_12_RED);
 
-  // Восстанавливаем красных, только если состав отсутствует.
-  if(!Array.isArray(oldMatch.redPlayers)||!oldMatch.redPlayers.length){
-   oldMatch.redPlayers=[
-    "Илья",
-    "Максим",
-    "Лена Крохина",
-    "Евгений Буданов",
-    "Марат Юсупов",
-    "Сергей Карташов"
-   ];
+  const blueChanged=
+   JSON.stringify(oldMatch.bluePlayers||[])!==JSON.stringify(NOVEMBER_12_BLUE);
+
+  if(redChanged){
+   oldMatch.redPlayers=[...NOVEMBER_12_RED];
    migrated=true;
   }
 
-  // Восстанавливаем синих, только если состав отсутствует.
-  if(!Array.isArray(oldMatch.bluePlayers)||!oldMatch.bluePlayers.length){
-   oldMatch.bluePlayers=[
-    "Сергей Малявкин",
-    "Вова",
-    "Ксюша",
-    "Семён",
-    "Евгений Мойсук",
-    "Виталий"
-   ];
+  if(blueChanged){
+   oldMatch.bluePlayers=[...NOVEMBER_12_BLUE];
    migrated=true;
   }
  }
@@ -533,55 +683,89 @@ async function load(){
  render();
  status("Данные успешно загружены.");
 
- // Сохраняем восстановленные составы в базе, если вошёл администратор.
+ // Сохраняем исправленные составы в базе, если вошёл администратор.
  if(migrated&&isAdmin){
   await save();
+ }else if(migrated){
+  status("Составы восстановлены для отображения. Войдите как администратор, чтобы сохранить исправление в базе.");
  }
 }
 
 async function save(){
  if(!isAdmin||busy)return;
+
  busy=true;
  status("Сохраняем изменения...");
+
  const {error}=await db.from("team_state")
-  .update({payload:data,updated_at:new Date().toISOString()})
+  .update({
+   payload:data,
+   updated_at:new Date().toISOString()
+  })
   .eq("id",1);
+
  busy=false;
+
  if(error)status("Ошибка сохранения: "+error.message);
  else status("Изменения сохранены.");
 }
 
 async function refreshAuth(){
  const {data:result,error}=await db.auth.getUser();
- if(error){isAdmin=false;render();return;}
+
+ if(error){
+  isAdmin=false;
+  render();
+  return;
+ }
+
  const user=result?.user;
  isAdmin=!!user&&user.id===ADMIN_ID;
+
  if(user&&!isAdmin){
   await db.auth.signOut();
   status("У аккаунта нет прав администратора.");
  }
+
  render();
 }
 
-$("loginButton").onclick=()=>$("loginForm").classList.remove("hidden");
-$("cancelLogin").onclick=()=>$("loginForm").classList.add("hidden");
+$("loginButton").onclick=()=>
+ $("loginForm").classList.remove("hidden");
+
+$("cancelLogin").onclick=()=>
+ $("loginForm").classList.add("hidden");
 
 $("submitLogin").onclick=async()=>{
  const email=$("email").value.trim();
  const password=$("password").value;
- if(!email||!password){status("Введите почту и пароль.");return;}
+
+ if(!email||!password){
+  status("Введите почту и пароль.");
+  return;
+ }
+
  status("Проверяем вход...");
+
  const {error}=await db.auth.signInWithPassword({email,password});
- if(error){status("Ошибка входа: "+error.message);return;}
+
+ if(error){
+  status("Ошибка входа: "+error.message);
+  return;
+ }
+
  await refreshAuth();
  await load();
+
  $("loginForm").classList.add("hidden");
 };
 
 $("logoutButton").onclick=async()=>{
  await db.auth.signOut();
+
  isAdmin=false;
  render();
+
  status("Вы вышли из режима администратора.");
 };
 
@@ -589,21 +773,29 @@ $("searchPlayers").addEventListener("input",renderPlayers);
 
 $("playerGrid").addEventListener("change",async e=>{
  const el=e.target;
+
  if(!el.dataset.field)return;
+
  const i=Number(el.dataset.player);
  const field=el.dataset.field;
+
  if(!validRating(el.value)){
   alert("Оценка должна быть целым числом от 0 до 10.");
-  renderPlayers();return;
+  renderPlayers();
+  return;
  }
+
  data.players[i][field]=Number(el.value);
+
  render();
  await save();
 });
 
 $("playerGrid").addEventListener("click",async e=>{
  if(!e.target.classList.contains("delete-player"))return;
+
  const i=Number(e.target.dataset.i);
+
  if(confirm("Удалить игрока "+data.players[i].name+"?")){
   data.players.splice(i,1);
   render();
@@ -613,24 +805,34 @@ $("playerGrid").addEventListener("click",async e=>{
 
 $("addPlayer").onclick=async()=>{
  const name=$("newName").value.trim();
- if(!name){alert("Введите имя игрока.");return;}
+
+ if(!name){
+  alert("Введите имя игрока.");
+  return;
+ }
+
  if(data.players.some(p=>samePlayer(p.name,name))){
   alert("Игрок с таким именем уже существует.");
   return;
  }
+
  const fields=["newAttack","newReceive","newServe"];
  const values=fields.map(id=>$(id).value);
+
  if(values.some(v=>!validRating(v))){
   alert("Все оценки должны быть от 0 до 10.");
   return;
  }
+
  data.players.push({
   name,
   attack:Number(values[0]),
   receive:Number(values[1]),
   serve:Number(values[2])
  });
+
  $("newName").value="";
+
  render();
  await save();
 };
@@ -644,14 +846,22 @@ $("addMatch").onclick=async()=>{
   alert("Укажите дату и счёт.");
   return;
  }
- const red=Number(r),blue=Number(b);
+
+ const red=Number(r);
+ const blue=Number(b);
+
  if(!Number.isInteger(red)||!Number.isInteger(blue)||red<0||blue<0){
   alert("Введите корректный счёт.");
   return;
  }
 
- const redIndexes=[...document.querySelectorAll('.roster-check[data-team="red"]:checked')].map(x=>Number(x.value));
- const blueIndexes=[...document.querySelectorAll('.roster-check[data-team="blue"]:checked')].map(x=>Number(x.value));
+ const redIndexes=[
+  ...document.querySelectorAll('.roster-check[data-team="red"]:checked')
+ ].map(x=>Number(x.value));
+
+ const blueIndexes=[
+  ...document.querySelectorAll('.roster-check[data-team="blue"]:checked')
+ ].map(x=>Number(x.value));
 
  if(!redIndexes.length||!blueIndexes.length){
   alert("Выберите хотя бы одного игрока в каждую команду.");
@@ -660,14 +870,18 @@ $("addMatch").onclick=async()=>{
 
  const redPlayers=redIndexes.map(i=>data.players[i].name);
  const bluePlayers=blueIndexes.map(i=>data.players[i].name);
+
  const redSet=new Set(redPlayers.map(normalizeName));
+
  if(bluePlayers.some(name=>redSet.has(normalizeName(name)))){
   alert("Один игрок не может быть одновременно в двух командах.");
   return;
  }
 
  data.matches.push({
-  date,red,blue,
+  date,
+  red,
+  blue,
   winner:red>blue?"Красные":blue>red?"Синие":"Ничья",
   redPlayers,
   bluePlayers
@@ -675,14 +889,18 @@ $("addMatch").onclick=async()=>{
 
  $("redScore").value="";
  $("blueScore").value="";
+
  document.querySelectorAll(".roster-check").forEach(x=>x.checked=false);
+
  render();
  await save();
 };
 
 $("matchesList").addEventListener("click",async e=>{
  if(!e.target.classList.contains("delete-match"))return;
+
  const i=Number(e.target.dataset.i);
+
  if(confirm("Удалить этот матч?")){
   data.matches.splice(i,1);
   render();
@@ -690,20 +908,32 @@ $("matchesList").addEventListener("click",async e=>{
  }
 });
 
-// Не разрешаем выбрать одного игрока одновременно в обе команды.
+// Не разрешаем выбрать одного игрока одновременно в двух командах.
 document.addEventListener("change",e=>{
  if(!e.target.classList.contains("roster-check")||!e.target.checked)return;
+
  const team=e.target.dataset.team;
  const other=team==="red"?"blue":"red";
  const value=e.target.value;
- const otherCheckbox=document.querySelector('.roster-check[data-team="'+other+'"][value="'+value+'"]');
+
+ const otherCheckbox=document.querySelector(
+  '.roster-check[data-team="'+other+'"][value="'+value+'"]'
+ );
+
  if(otherCheckbox)otherCheckbox.checked=false;
 });
 
+// Переключение вкладок.
 document.querySelectorAll(".tab").forEach(btn=>{
  btn.onclick=()=>{
-  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-  document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(x=>
+   x.classList.remove("active")
+  );
+
+  document.querySelectorAll(".section").forEach(x=>
+   x.classList.remove("active")
+  );
+
   btn.classList.add("active");
   $(btn.dataset.tab).classList.add("active");
  };
@@ -714,10 +944,18 @@ async function start(){
  await load();
 
  db.channel("team-state-changes")
-  .on("postgres_changes",
-   {event:"UPDATE",schema:"public",table:"team_state"},
-   async()=>{if(!busy)await load();}
-  ).subscribe();
+  .on(
+   "postgres_changes",
+   {
+    event:"UPDATE",
+    schema:"public",
+    table:"team_state"
+   },
+   async()=>{
+    if(!busy)await load();
+   }
+  )
+  .subscribe();
 }
 
 start();
