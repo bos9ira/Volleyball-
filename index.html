@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -55,6 +54,10 @@ main{max-width:1100px;margin:25px auto;padding:0 16px}
 .avatar-placeholder{display:grid;place-items:center;font-size:25px}
 .player-name{font-size:16px;font-weight:700;overflow-wrap:anywhere}
 .player-rank{font-size:11px;color:var(--muted);margin-top:5px}
+.gender-badge{display:inline-flex;align-items:center;justify-content:center;min-width:23px;height:21px;padding:2px 6px;border-radius:6px;font-size:11px;font-weight:800;margin-left:5px;vertical-align:middle}
+.gender-m{background:#18395f;color:#72aaff;border:1px solid #315b8b}
+.gender-f{background:#512b48;color:#ff9bd0;border:1px solid #87466f}
+.gender-none{background:#263750;color:var(--muted);border:1px solid #354862}
 .rating{width:52px;height:52px;flex-shrink:0;border-radius:13px;background:#173d3a;border:1px solid #236b5b;display:grid;place-items:center;color:var(--green);font-size:19px;font-weight:800}
 .skill{margin-top:17px}
 .skill-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px}
@@ -64,6 +67,9 @@ main{max-width:1100px;margin:25px auto;padding:0 16px}
 .player-edit{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:13px}
 .player-edit label{font-size:10px;color:var(--muted)}
 .player-edit input{width:100%;margin-top:5px}
+.player-profile-edit{display:grid;grid-template-columns:1fr 85px;gap:7px;margin-top:13px}
+.player-profile-edit label{font-size:10px;color:var(--muted);min-width:0}
+.player-profile-edit input,.player-profile-edit select{width:100%;margin-top:5px;padding:9px 6px;font-size:12px}
 .avatar-edit{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
 .avatar-edit label{font-size:11px;color:var(--muted);display:block;margin-bottom:7px}
 .avatar-edit input{width:100%;font-size:11px;padding:7px}
@@ -75,7 +81,7 @@ input[type=checkbox]{accent-color:var(--green)}
 .form-panel{background:var(--panel2);border:1px solid var(--line);border-radius:13px;padding:15px;margin:15px 0}
 .form-panel h4{margin:0 0 12px}
 .form-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.form-row input{flex:1}
+.form-row input,.form-row select{flex:1}
 .match-list{display:grid;gap:11px}
 .match-card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:16px}
 .match-date{font-size:12px;color:var(--muted);margin-bottom:12px}
@@ -243,6 +249,11 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
    <h4>Добавить игрока</h4>
    <div class="form-row">
     <input id="newName" placeholder="Имя игрока">
+    <select id="newGender">
+     <option value="">Пол</option>
+     <option value="М">М — мужчина</option>
+     <option value="Ж">Ж — женщина</option>
+    </select>
     <input id="newAttack" type="number" min="0" max="10" value="5" placeholder="Нападение">
     <input id="newReceive" type="number" min="0" max="10" value="5" placeholder="Приём">
     <input id="newServe" type="number" min="0" max="10" value="5" placeholder="Подача">
@@ -309,7 +320,6 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
   <div id="attendanceContent"></div>
  </section>
 
- <!-- НОВЫЙ РАЗДЕЛ: ПРОТИВОСТОЯНИЯ -->
  <section class="section" id="rivalries">
   <div class="section-head">
    <div>
@@ -402,23 +412,44 @@ function isNovember12Match(m){
 }
 
 function roster(m,team){
- if(isNovember12Match(m)){
-  return team==="red"?NOVEMBER_12_RED:NOVEMBER_12_BLUE;
- }
  const value=team==="red"?m.redPlayers:m.bluePlayers;
+
  if(Array.isArray(value))return value;
+
  if(typeof value==="string"){
   try{
    const parsed=JSON.parse(value);
-   return Array.isArray(parsed)?parsed:[];
-  }catch(e){return [];}
+   if(Array.isArray(parsed))return parsed;
+  }catch(e){}
  }
+
+ if(isNovember12Match(m)){
+  return team==="red"?NOVEMBER_12_RED:NOVEMBER_12_BLUE;
+ }
+
  return [];
 }
 
 function attendanceOf(m){
  if(Array.isArray(m.attendance))return m.attendance;
  return [...new Set([...roster(m,"red"),...roster(m,"blue")])];
+}
+
+/* ПЕРЕИМЕНОВАНИЕ ИГРОКА ВО ВСЕЙ ИСТОРИИ */
+
+function renamePlayerReferences(oldName,newName){
+ data.matches.forEach(m=>{
+  const red=roster(m,"red");
+  const blue=roster(m,"blue");
+  const attendance=attendanceOf(m);
+
+  m.redPlayers=red.map(name=>samePlayer(name,oldName)?newName:name);
+  m.bluePlayers=blue.map(name=>samePlayer(name,oldName)?newName:name);
+
+  m.attendance=attendance.map(name=>
+   samePlayer(name,oldName)?newName:name
+  );
+ });
 }
 
 function playerStats(playerName){
@@ -487,6 +518,12 @@ function avatarHTML(p,extra=""){
  return `<div class="avatar avatar-placeholder ${extra}">🏐</div>`;
 }
 
+function genderHTML(gender){
+ if(gender==="М")return '<span class="gender-badge gender-m">М</span>';
+ if(gender==="Ж")return '<span class="gender-badge gender-f">Ж</span>';
+ return '<span class="gender-badge gender-none">—</span>';
+}
+
 function renderPlayers(){
  const grid=$("playerGrid");
  const query=$("searchPlayers").value.trim().toLowerCase();
@@ -494,7 +531,7 @@ function renderPlayers(){
  const sorted=data.players.map((p,i)=>({...p,_i:i}))
   .sort((a,b)=>Number(avg(b))-Number(avg(a)));
 
- const filtered=sorted.filter(p=>p.name.toLowerCase().includes(query));
+ const filtered=sorted.filter(p=>String(p.name||"").toLowerCase().includes(query));
 
  if(!filtered.length){
   grid.innerHTML='<div class="empty">Игроки не найдены.</div>';
@@ -515,7 +552,7 @@ function renderPlayers(){
      <div class="player-identity">
       ${avatarHTML(p)}
       <div>
-       <div class="player-name">${esc(p.name)}</div>
+       <div class="player-name">${esc(p.name)} ${genderHTML(p.gender)}</div>
        <div class="player-rank">Место в рейтинге: #${index+1}</div>
       </div>
      </div>
@@ -564,6 +601,21 @@ function renderPlayers(){
     </details>
 
     ${isAdmin?`
+     <div class="player-profile-edit">
+      <label>Имя участника
+       <input type="text" maxlength="60"
+        value="${esc(p.name)}"
+        data-player="${i}" data-profile-field="name">
+      </label>
+      <label>Пол
+       <select data-player="${i}" data-profile-field="gender">
+        <option value="" ${!p.gender?"selected":""}>—</option>
+        <option value="М" ${p.gender==="М"?"selected":""}>М</option>
+        <option value="Ж" ${p.gender==="Ж"?"selected":""}>Ж</option>
+       </select>
+      </label>
+     </div>
+
      <div class="player-edit">
       ${skills.map(([label,key])=>`
        <label>${label}
@@ -572,6 +624,7 @@ function renderPlayers(){
        </label>
       `).join("")}
      </div>
+
      <div class="avatar-edit">
       <label>📷 Фотография игрока</label>
       <input type="file" accept="image/*" class="avatar-upload" data-player="${i}">
@@ -651,14 +704,14 @@ function renderRosterOptions(){
  const makeTeamOptions=team=>data.players.map((p,i)=>`
   <label class="player-option">
    <input type="checkbox" class="roster-check" data-team="${team}" value="${i}">
-   <span>${esc(p.name)}</span>
+   <span>${esc(p.name)} ${p.gender?`(${p.gender})`:""}</span>
   </label>
  `).join("");
 
  const makeAttendanceOptions=()=>data.players.map((p,i)=>`
   <label class="attendance-option">
    <input type="checkbox" class="attendance-check" value="${i}">
-   <span>${esc(p.name)}</span>
+   <span>${esc(p.name)} ${p.gender?`(${p.gender})`:""}</span>
   </label>
  `).join("");
 
@@ -711,7 +764,7 @@ function renderAttendance(){
          ${r.player.avatar
           ?`<img src="${esc(r.player.avatar)}" alt="">`
           :'<span class="mini-avatar">🏐</span>'}
-         <span>${index===0&&r.attended>0?"🥇 ": ""}${esc(r.player.name)}</span>
+         <span>${index===0&&r.attended>0?"🥇 ":""}${esc(r.player.name)} ${r.player.gender?`(${r.player.gender})`:""}</span>
         </div>
        </td>
        <td><strong>${r.attended}/${total}</strong></td>
@@ -726,9 +779,7 @@ function renderAttendance(){
  `;
 }
 
-/* ==========================================
-   НОВЫЙ РАЗДЕЛ: ИСТОРИЯ ПРОТИВОСТОЯНИЙ
-   ========================================== */
+/* ИСТОРИЯ ПРОТИВОСТОЯНИЙ */
 
 function getRivalryStats(playerName){
  const opponents={};
@@ -741,8 +792,6 @@ function getRivalryStats(playerName){
   const inRed=red.some(n=>samePlayer(n,playerName));
   const inBlue=blue.some(n=>samePlayer(n,playerName));
 
-  // Если состав неизвестен или игрок оказался
-  // сразу в обеих командах — матч пропускаем.
   if(inRed===inBlue)return;
 
   const myTeam=inRed?red:blue;
@@ -754,49 +803,31 @@ function getRivalryStats(playerName){
   const lost=winner!=="Ничья"&&!won;
   const draw=winner==="Ничья";
 
-  // Соперники — игроки из противоположной команды.
   enemyTeam.forEach(name=>{
    if(samePlayer(name,playerName))return;
-
    const key=normalizeName(name);
 
    if(!opponents[key]){
-    opponents[key]={
-     name:name,
-     wins:0,
-     losses:0,
-     draws:0,
-     matches:0
-    };
+    opponents[key]={name,wins:0,losses:0,draws:0,matches:0};
    }
 
    const p=opponents[key];
    p.matches++;
-
    if(won)p.wins++;
    else if(lost)p.losses++;
    else if(draw)p.draws++;
   });
 
-  // Партнёры — игроки из той же команды.
   myTeam.forEach(name=>{
    if(samePlayer(name,playerName))return;
-
    const key=normalizeName(name);
 
    if(!partners[key]){
-    partners[key]={
-     name:name,
-     wins:0,
-     losses:0,
-     draws:0,
-     matches:0
-    };
+    partners[key]={name,wins:0,losses:0,draws:0,matches:0};
    }
 
    const p=partners[key];
    p.matches++;
-
    if(won)p.wins++;
    else if(lost)p.losses++;
    else if(draw)p.draws++;
@@ -826,7 +857,6 @@ function renderRivalries(){
 
  if(!selector||!content||!teamBox)return;
 
- // Сохраняем выбранного игрока при обновлении страницы.
  const selected=selector.value;
 
  selector.innerHTML=
@@ -834,21 +864,18 @@ function renderRivalries(){
   data.players.map(p=>`
    <option value="${esc(p.name)}" ${
     samePlayer(p.name,selected)?"selected":""
-   }>${esc(p.name)}</option>
+   }>${esc(p.name)} ${p.gender?`(${p.gender})`:""}</option>
   `).join("");
 
- // Общая статистика команд.
  let redWins=0,blueWins=0,draws=0;
  let redSets=0,blueSets=0;
 
  data.matches.forEach(m=>{
   const winner=getWinner(m);
-
   if(winner==="Красные")redWins++;
   else if(winner==="Синие")blueWins++;
   else draws++;
 
-  // Счёт по партиям.
   redSets+=Number(m.red)||0;
   blueSets+=Number(m.blue)||0;
  });
@@ -930,20 +957,14 @@ function renderRivalries(){
   ${topOpponent?`
    <div class="rivalry-highlight">
     <strong>⚔️ ${esc(topOpponent.name)}</strong>
-    <span>
-     Самый часто встречающийся соперник:
-     ${topOpponent.matches} матчей
-    </span>
+    <span>Самый часто встречающийся соперник: ${topOpponent.matches} матчей</span>
    </div>
   `:""}
 
   ${topPartner?`
    <div class="rivalry-highlight">
     <strong>🤝 ${esc(topPartner.name)}</strong>
-    <span>
-     Самый частый партнёр:
-     ${topPartner.matches} совместных матчей
-    </span>
+    <span>Самый частый партнёр: ${topPartner.matches} совместных матчей</span>
    </div>
   `:""}
 
@@ -1005,15 +1026,17 @@ async function load(){
  if(!Array.isArray(data.players))data.players=[];
  if(!Array.isArray(data.matches))data.matches=[];
 
+ // Добавляем известные составы матча 12 ноября только если они отсутствуют.
+ // Существующие составы больше не перезаписываются.
  let migrated=false;
  const oldMatch=data.matches.find(isNovember12Match);
 
  if(oldMatch){
-  if(JSON.stringify(oldMatch.redPlayers||[])!==JSON.stringify(NOVEMBER_12_RED)){
+  if(!Array.isArray(oldMatch.redPlayers)||!oldMatch.redPlayers.length){
    oldMatch.redPlayers=[...NOVEMBER_12_RED];
    migrated=true;
   }
-  if(JSON.stringify(oldMatch.bluePlayers||[])!==JSON.stringify(NOVEMBER_12_BLUE)){
+  if(!Array.isArray(oldMatch.bluePlayers)||!oldMatch.bluePlayers.length){
    oldMatch.bluePlayers=[...NOVEMBER_12_BLUE];
    migrated=true;
   }
@@ -1183,10 +1206,12 @@ $("logoutButton").onclick=async()=>{
 
 $("searchPlayers").addEventListener("input",renderPlayers);
 
-/* ИЗМЕНЕНИЕ ОЦЕНОК И ФОТОГРАФИЙ */
+/* ИЗМЕНЕНИЕ ИМЕНИ, ПОЛА, ОЦЕНОК И ФОТОГРАФИЙ */
 
 $("playerGrid").addEventListener("change",async e=>{
  const el=e.target;
+
+ if(!isAdmin)return;
 
  if(el.classList.contains("avatar-upload")){
   const i=Number(el.dataset.player);
@@ -1237,6 +1262,51 @@ $("playerGrid").addEventListener("change",async e=>{
   return;
  }
 
+ // Редактирование имени и пола.
+ if(el.dataset.profileField){
+  const i=Number(el.dataset.player);
+  const field=el.dataset.profileField;
+
+  if(!data.players[i])return;
+
+  if(field==="name"){
+   const oldName=data.players[i].name;
+   const newName=el.value.trim();
+
+   if(!newName){
+    alert("Имя игрока не может быть пустым.");
+    renderPlayers();
+    return;
+   }
+
+   if(data.players.some((p,index)=>
+    index!==i&&samePlayer(p.name,newName)
+   )){
+    alert("Игрок с таким именем уже существует.");
+    renderPlayers();
+    return;
+   }
+
+   if(oldName!==newName){
+    renamePlayerReferences(oldName,newName);
+    data.players[i].name=newName;
+   }
+  }
+
+  if(field==="gender"){
+   if(!["М","Ж",""].includes(el.value)){
+    renderPlayers();
+    return;
+   }
+   data.players[i].gender=el.value;
+  }
+
+  render();
+  await save();
+  return;
+ }
+
+ // Изменение спортивных оценок.
  if(!el.dataset.field)return;
 
  const i=Number(el.dataset.player);
@@ -1257,7 +1327,7 @@ $("playerGrid").addEventListener("change",async e=>{
 /* УДАЛЕНИЕ ИГРОКОВ */
 
 $("playerGrid").addEventListener("click",async e=>{
- if(!e.target.classList.contains("delete-player"))return;
+ if(!isAdmin||!e.target.classList.contains("delete-player"))return;
 
  const i=Number(e.target.dataset.i);
 
@@ -1271,7 +1341,10 @@ $("playerGrid").addEventListener("click",async e=>{
 /* ДОБАВЛЕНИЕ ИГРОКОВ */
 
 $("addPlayer").onclick=async()=>{
+ if(!isAdmin)return;
+
  const name=$("newName").value.trim();
+ const gender=$("newGender").value;
 
  if(!name){
   alert("Введите имя игрока.");
@@ -1293,12 +1366,14 @@ $("addPlayer").onclick=async()=>{
 
  data.players.push({
   name,
+  gender,
   attack:Number(values[0]),
   receive:Number(values[1]),
   serve:Number(values[2])
  });
 
  $("newName").value="";
+ $("newGender").value="";
 
  render();
  await save();
@@ -1363,6 +1438,8 @@ $("clearTeams").onclick=()=>{
 /* ДОБАВЛЕНИЕ МАТЧА */
 
 $("addMatch").onclick=async()=>{
+ if(!isAdmin)return;
+
  const date=$("matchDate").value;
  const r=$("redScore").value;
  const b=$("blueScore").value;
@@ -1431,7 +1508,7 @@ $("addMatch").onclick=async()=>{
 /* УДАЛЕНИЕ МАТЧЕЙ */
 
 $("matchesList").addEventListener("click",async e=>{
- if(!e.target.classList.contains("delete-match"))return;
+ if(!isAdmin||!e.target.classList.contains("delete-match"))return;
 
  const i=Number(e.target.dataset.i);
 
