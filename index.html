@@ -144,9 +144,6 @@ input[type=checkbox]{accent-color:var(--green)}
 .team-metric{background:#17263c;border-radius:8px;padding:8px 5px;text-align:center}
 .team-metric strong{display:block;font-size:15px}
 .team-metric span{display:block;color:var(--muted);font-size:9px;margin-top:4px}
-.team-board-bottom{margin-top:10px;padding:10px;background:#17263c;border-radius:9px;display:flex;justify-content:space-around;gap:8px;flex-wrap:wrap}
-.team-board-bottom span{font-size:10px;color:var(--muted)}
-.team-board-bottom strong{color:var(--text);font-size:12px}
 .team-balance{margin-top:13px;background:#0b1728;border:1px solid var(--line);border-radius:10px;padding:12px}
 .team-balance-title{font-size:12px;font-weight:800;margin-bottom:9px}
 .team-balance-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
@@ -182,6 +179,77 @@ input[type=checkbox]{accent-color:var(--green)}
 .hidden{display:none!important}
 footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
 
+/* ОТДЕЛЬНОЕ ПОЛНОЭКРАННОЕ ТАБЛО ДЛЯ СКРИНШОТА */
+
+.share-board-overlay{
+ position:fixed;inset:0;z-index:9999;
+ display:none;align-items:center;justify-content:center;
+ padding:12px;background:#050b14;
+}
+.share-board-overlay.open{display:flex}
+.share-board{
+ width:100%;max-width:650px;
+ max-height:100%;overflow:auto;
+ background:#0b1728;border:1px solid #263750;
+ border-radius:16px;padding:15px;
+}
+.share-board-header{
+ display:flex;justify-content:space-between;align-items:center;
+ gap:10px;margin-bottom:12px;
+}
+.share-board-brand{font-size:10px;color:var(--muted);letter-spacing:2px;font-weight:bold}
+.share-board-heading{font-size:20px;font-weight:900;margin-top:5px}
+.share-board-date{font-size:11px;color:var(--muted);margin-top:4px}
+.share-board-close{background:#263750;padding:8px 12px;flex-shrink:0}
+.share-board-teams{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.share-team{
+ border:1px solid #263750;border-radius:11px;
+ padding:10px;min-width:0;background:#101e31;
+}
+.share-team.red{border-top:4px solid var(--red)}
+.share-team.blue{border-top:4px solid var(--blue)}
+.share-team-title{
+ font-size:14px;font-weight:900;margin-bottom:8px;
+}
+.share-team.red .share-team-title{color:var(--red)}
+.share-team.blue .share-team-title{color:#72aaff}
+.share-team-count{font-size:10px;color:var(--muted);margin-bottom:8px}
+.share-team-names{display:grid;gap:5px}
+.share-player-name{
+ font-size:12px;font-weight:700;line-height:1.2;
+ padding:6px 7px;border-radius:6px;background:#17263c;
+ overflow-wrap:anywhere;
+}
+.share-metrics-title{
+ font-size:11px;font-weight:900;letter-spacing:1px;
+ margin:12px 0 7px;
+}
+.share-metrics{
+ width:100%;border-collapse:collapse;
+ background:#101e31;border-radius:9px;overflow:hidden;
+}
+.share-metrics th,.share-metrics td{
+ padding:8px 7px;text-align:center;
+ border-bottom:1px solid #263750;font-size:11px;
+}
+.share-metrics tr:last-child td{border-bottom:0}
+.share-metrics th{color:var(--muted);font-size:9px;font-weight:700}
+.share-metrics th:first-child,.share-metrics td:first-child{text-align:left}
+.share-metrics .red-value{color:var(--red);font-weight:900}
+.share-metrics .blue-value{color:#72aaff;font-weight:900}
+.share-board-footer{
+ display:flex;justify-content:space-between;align-items:center;
+ gap:8px;margin-top:10px;padding:9px 10px;
+ background:#17263c;border-radius:8px;
+ font-size:10px;color:var(--muted);
+}
+.share-board-footer strong{color:var(--green);font-size:11px}
+.share-board-actions{
+ display:flex;justify-content:center;gap:8px;margin-top:12px;
+}
+.share-board-actions button{font-size:12px}
+body.share-board-open{overflow:hidden}
+
 @media(max-width:760px){
  .player-grid{grid-template-columns:repeat(2,1fr)}
  .stats{grid-template-columns:repeat(2,1fr)}
@@ -206,6 +274,40 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
  .attendance-grid{grid-template-columns:1fr 1fr}
  .attendance-table th,.attendance-table td{padding:9px 6px;font-size:10px}
  .attendance-player img,.attendance-player .mini-avatar{width:27px;height:27px}
+}
+
+/* Компактное табло на телефоне: две команды и общая таблица */
+@media(max-width:430px){
+ .share-board-overlay{padding:5px}
+ .share-board{padding:10px;border-radius:10px}
+ .share-board-heading{font-size:17px}
+ .share-board-header{margin-bottom:8px}
+ .share-team{padding:7px}
+ .share-team-title{font-size:12px;margin-bottom:5px}
+ .share-team-count{font-size:9px;margin-bottom:5px}
+ .share-team-names{gap:4px}
+ .share-player-name{font-size:10px;padding:5px 5px}
+ .share-metrics-title{margin:8px 0 5px;font-size:10px}
+ .share-metrics th,.share-metrics td{padding:6px 5px;font-size:10px}
+ .share-metrics th{font-size:8px}
+ .share-board-footer{margin-top:7px;padding:7px;font-size:9px}
+ .share-board-actions{margin-top:8px}
+ .share-board-actions button{padding:8px 10px;font-size:11px}
+}
+
+/* При печати или сохранении в PDF остаётся только табло */
+@media print{
+ body *{visibility:hidden!important}
+ .share-board-overlay,.share-board-overlay *{visibility:visible!important}
+ .share-board-overlay{
+  display:flex!important;position:absolute;inset:0;
+  padding:0;background:#050b14;
+ }
+ .share-board{
+  max-width:none;max-height:none;width:100%;
+  border:0;border-radius:0;overflow:visible;
+ }
+ .share-board-close,.share-board-actions{display:none!important}
 }
 </style>
 </head>
@@ -332,6 +434,7 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
    </div>
 
    <div class="form-actions">
+    <button id="openShareBoard" class="secondary hidden">📋 Открыть табло для скриншота</button>
     <button id="addMatch">Сохранить матч</button>
    </div>
   </div>
@@ -372,6 +475,28 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
 </main>
 
 <footer>VOLLEYBALL CLUB · TEAM ANALYTICS</footer>
+
+<!-- ПОЛНОЭКРАННОЕ ТАБЛО ДЛЯ ПОКАЗА УЧАСТНИКАМ -->
+
+<div id="shareBoardOverlay" class="share-board-overlay">
+ <div class="share-board">
+  <div class="share-board-header">
+   <div>
+    <div class="share-board-brand">VOLLEYBALL CLUB</div>
+    <div class="share-board-heading">СОСТАВЫ КОМАНД</div>
+    <div class="share-board-date" id="shareBoardDate"></div>
+   </div>
+   <button id="closeShareBoard" class="share-board-close">✕</button>
+  </div>
+
+  <div id="shareBoardContent"></div>
+
+  <div class="share-board-actions">
+   <button id="printShareBoard" class="secondary">🖨️ Печать / PDF</button>
+   <button id="closeShareBoardBottom" class="secondary">Закрыть</button>
+  </div>
+ </div>
+</div>
 
 <script>
 const SUPABASE_URL="https://qautfnjsklvzjkihzfrr.supabase.co";
@@ -775,13 +900,15 @@ function getTeamMetrics(indexes){
  };
 }
 
-/* ОТОБРАЖЕНИЕ СПОРТИВНОГО ТАБЛО */
+/* ОТОБРАЖЕНИЕ СПОРТИВНОГО ТАБЛО В ФОРМЕ */
 
 function renderTeamBoard(){
  const board=$("teamBoard");
+ const openButton=$("openShareBoard");
 
  if(!generatedTeams){
   board.innerHTML='<div class="empty">Сначала отметь присутствующих игроков и нажми «Сформировать команды».</div>';
+  openButton.classList.add("hidden");
   return;
  }
 
@@ -895,7 +1022,109 @@ function renderTeamBoard(){
    <div class="team-balance-note">${balanceText} Распределение сохранится при записи матча в историю.</div>
   </div>
  `;
+
+ openButton.classList.remove("hidden");
 }
+
+/* ПУБЛИЧНОЕ ТАБЛО: БЕЗ ИНДИВИДУАЛЬНЫХ ОЦЕНОК */
+
+function renderShareBoard(){
+ if(!generatedTeams)return;
+
+ const red=getTeamMetrics(generatedTeams.red);
+ const blue=getTeamMetrics(generatedTeams.blue);
+
+ function shareTeam(team,color){
+  const isRed=color==="red";
+
+  return `
+   <div class="share-team ${color}">
+    <div class="share-team-title">${isRed?"🔴 КРАСНЫЕ":"🔵 СИНИЕ"}</div>
+    <div class="share-team-count">${team.count} ${team.count===1?"игрок":team.count>=2&&team.count<=4?"игрока":"игроков"}</div>
+    <div class="share-team-names">
+     ${team.players.map(p=>`
+      <div class="share-player-name">${esc(p.name)}</div>
+     `).join("")}
+    </div>
+   </div>
+  `;
+ }
+
+ const rows=[
+  ["Игроков",red.count,blue.count],
+  ["Средний рейтинг",red.average.toFixed(1),blue.average.toFixed(1)],
+  ["Нападение",red.attack,blue.attack],
+  ["Приём",red.receive,blue.receive],
+  ["Подача",red.serve,blue.serve],
+  ["Девушек",red.girls,blue.girls],
+  ["Связующих",red.setters,blue.setters]
+ ];
+
+ const averageDifference=Math.abs(red.average-blue.average);
+ let balanceText="Команды сформированы.";
+ if(averageDifference<=0.2){
+  balanceText="Команды практически равны по среднему рейтингу";
+ }else if(red.average>blue.average){
+  balanceText="Небольшое преимущество по среднему рейтингу у красных";
+ }else{
+  balanceText="Небольшое преимущество по среднему рейтингу у синих";
+ }
+
+ $("shareBoardContent").innerHTML=`
+  <div class="share-board-teams">
+   ${shareTeam(red,"red")}
+   ${shareTeam(blue,"blue")}
+  </div>
+
+  <div class="share-metrics-title">ОБЩИЕ ПОКАЗАТЕЛИ КОМАНД</div>
+  <table class="share-metrics">
+   <thead>
+    <tr>
+     <th>ПОКАЗАТЕЛЬ</th>
+     <th class="red-value">🔴 КРАСНЫЕ</th>
+     <th class="blue-value">🔵 СИНИЕ</th>
+    </tr>
+   </thead>
+   <tbody>
+    ${rows.map(row=>`
+     <tr>
+      <td>${row[0]}</td>
+      <td class="red-value">${row[1]}</td>
+      <td class="blue-value">${row[2]}</td>
+     </tr>
+    `).join("")}
+   </tbody>
+  </table>
+
+  <div class="share-board-footer">
+   <span>⚖️ Разница среднего рейтинга: <strong>${averageDifference.toFixed(2)}</strong></span>
+   <span>${esc(balanceText)}</span>
+  </div>
+ `;
+
+ const date=$("matchDate").value;
+ $("shareBoardDate").textContent=date
+  ?new Date(date+"T12:00:00").toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"})
+  :"Составы на предстоящую игру";
+}
+
+function openShareBoard(){
+ if(!generatedTeams){
+  alert("Сначала сформируй команды.");
+  return;
+ }
+
+ renderShareBoard();
+ $("shareBoardOverlay").classList.add("open");
+ document.body.classList.add("share-board-open");
+}
+
+function closeShareBoard(){
+ $("shareBoardOverlay").classList.remove("open");
+ document.body.classList.remove("share-board-open");
+}
+
+/* ПОСЕЩАЕМОСТЬ */
 
 function renderAttendance(){
  const box=$("attendanceContent");
@@ -1673,7 +1902,26 @@ $("clearTeams").onclick=()=>{
  generatedTeams=null;
  renderTeamBoard();
  updateAttendanceCount();
+ closeShareBoard();
 };
+
+/* ОТКРЫТИЕ И ЗАКРЫТИЕ ПОЛНОЭКРАННОГО ТАБЛО */
+
+$("openShareBoard").onclick=openShareBoard;
+$("closeShareBoard").onclick=closeShareBoard;
+$("closeShareBoardBottom").onclick=closeShareBoard;
+
+$("shareBoardOverlay").addEventListener("click",e=>{
+ if(e.target===$("shareBoardOverlay"))closeShareBoard();
+});
+
+$("printShareBoard").onclick=()=>{
+ window.print();
+};
+
+document.addEventListener("keydown",e=>{
+ if(e.key==="Escape")closeShareBoard();
+});
 
 /* ДОБАВЛЕНИЕ МАТЧА */
 
@@ -1751,6 +1999,7 @@ $("addMatch").onclick=async()=>{
  $("matchDate").value="";
 
  generatedTeams=null;
+ closeShareBoard();
 
  render();
  await save();
