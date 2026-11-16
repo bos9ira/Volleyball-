@@ -116,14 +116,6 @@ input[type=checkbox]{accent-color:var(--green)}
 #loginForm{margin-top:12px}
 .status{font-size:12px;color:var(--muted);margin-top:10px}
 .admin-note{color:var(--green);font-size:12px}
-.roster-selects{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:15px}
-.team-select{background:#0b1728;border:1px solid var(--line);border-radius:10px;padding:12px;min-width:0}
-.team-select h5{margin:0 0 10px;font-size:13px}
-.team-select.red h5{color:var(--red)}
-.team-select.blue h5{color:#72aaff}
-.player-options{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.player-option{display:flex;align-items:center;gap:7px;font-size:12px;color:#dce8fa;min-width:0}
-.player-option input{width:16px;height:16px;flex-shrink:0;margin:0}
 .form-hint{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5}
 .form-actions{margin-top:13px;display:flex;flex-wrap:wrap;gap:8px}
 .attendance-panel{background:#0b1728;border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:14px}
@@ -132,6 +124,36 @@ input[type=checkbox]{accent-color:var(--green)}
 .attendance-option{display:flex;align-items:center;gap:7px;font-size:12px;color:#dce8fa}
 .attendance-option input{width:16px;height:16px;margin:0}
 .attendance-summary{font-size:11px;color:var(--muted);margin-top:9px}
+.team-board{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:16px}
+.team-board-card{background:#0b1728;border:1px solid var(--line);border-radius:13px;padding:14px;min-width:0}
+.team-board-card.red{border-top:3px solid var(--red)}
+.team-board-card.blue{border-top:3px solid var(--blue)}
+.team-board-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+.team-board-title{font-size:15px;font-weight:800}
+.team-board-card.red .team-board-title{color:var(--red)}
+.team-board-card.blue .team-board-title{color:#72aaff}
+.team-board-count{font-size:11px;color:var(--muted);background:#17263c;padding:5px 8px;border-radius:7px}
+.team-board-roster{display:grid;gap:8px}
+.team-board-player{display:flex;align-items:center;gap:9px;background:#111e31;border:1px solid #263750;border-radius:9px;padding:8px;min-width:0}
+.team-board-player .avatar{width:36px;height:36px}
+.team-board-player .avatar-placeholder{font-size:17px}
+.team-board-player-name{font-size:12px;font-weight:700;overflow-wrap:anywhere;min-width:0}
+.team-board-player-info{font-size:10px;color:var(--muted);margin-top:3px}
+.team-board-player-rating{margin-left:auto;flex-shrink:0;font-size:13px;font-weight:800;color:var(--green)}
+.team-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px}
+.team-metric{background:#17263c;border-radius:8px;padding:8px 5px;text-align:center}
+.team-metric strong{display:block;font-size:15px}
+.team-metric span{display:block;color:var(--muted);font-size:9px;margin-top:4px}
+.team-board-bottom{margin-top:10px;padding:10px;background:#17263c;border-radius:9px;display:flex;justify-content:space-around;gap:8px;flex-wrap:wrap}
+.team-board-bottom span{font-size:10px;color:var(--muted)}
+.team-board-bottom strong{color:var(--text);font-size:12px}
+.team-balance{margin-top:13px;background:#0b1728;border:1px solid var(--line);border-radius:10px;padding:12px}
+.team-balance-title{font-size:12px;font-weight:800;margin-bottom:9px}
+.team-balance-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.team-balance-item{background:#17263c;border-radius:8px;padding:9px;text-align:center}
+.team-balance-item strong{display:block;font-size:15px}
+.team-balance-item span{display:block;font-size:9px;color:var(--muted);margin-top:4px}
+.team-balance-note{font-size:11px;color:var(--muted);margin-top:9px;line-height:1.5}
 .attendance-table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:12px;overflow:hidden}
 .attendance-table th,.attendance-table td{padding:12px 10px;text-align:left;border-bottom:1px solid var(--line);font-size:12px}
 .attendance-table th{color:var(--muted);font-weight:600}
@@ -159,11 +181,16 @@ input[type=checkbox]{accent-color:var(--green)}
 .rivalry-highlight span{display:block;font-size:11px;color:var(--muted);margin-top:5px}
 .hidden{display:none!important}
 footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
+
 @media(max-width:760px){
  .player-grid{grid-template-columns:repeat(2,1fr)}
  .stats{grid-template-columns:repeat(2,1fr)}
  .hero h2{font-size:23px}
  .attendance-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:560px){
+ .team-board{grid-template-columns:1fr}
+ .team-balance-grid{grid-template-columns:repeat(3,1fr)}
 }
 @media(max-width:480px){
  .player-grid{grid-template-columns:1fr}
@@ -175,8 +202,7 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
  .stat-value{font-size:24px}
  .scoreline{gap:12px}
  .team{font-size:11px}
- .match-rosters,.roster-selects{grid-template-columns:1fr}
- .player-options{grid-template-columns:1fr 1fr}
+ .match-rosters{grid-template-columns:1fr}
  .attendance-grid{grid-template-columns:1fr 1fr}
  .attendance-table th,.attendance-table td{padding:9px 6px;font-size:10px}
  .attendance-player img,.attendance-player .mini-avatar{width:27px;height:27px}
@@ -293,24 +319,18 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
    </div>
 
    <div class="form-actions">
-    <button id="autoTeams">⚖️ Сформировать команды по силе</button>
-    <button id="clearTeams" class="secondary">Очистить составы</button>
-   </div>
-   <div class="form-hint">
-    Алгоритм сначала старается равномерно распределить девушек и связующих, затем выравнивает общий рейтинг, нападение, приём и подачу. После распределения составы можно изменить вручную.
+    <button id="autoTeams">⚖️ Сформировать команды</button>
+    <button id="clearTeams" class="secondary">Очистить выбор</button>
    </div>
 
-   <div class="roster-selects">
-    <div class="team-select red">
-     <h5>🔴 Состав красных</h5>
-     <div id="redPlayerOptions" class="player-options"></div>
-    </div>
-    <div class="team-select blue">
-     <h5>🔵 Состав синих</h5>
-     <div id="bluePlayerOptions" class="player-options"></div>
-    </div>
+   <div class="form-hint">
+    Отметь всех присутствующих и нажми «Сформировать команды». Алгоритм постарается равномерно распределить девушек и связующих, а затем сбалансирует общий рейтинг, нападение, приём и подачу.
    </div>
-   <div class="form-hint">Все отмеченные как присутствующие игроки должны быть распределены в одну из команд. Один игрок не может находиться сразу в двух командах.</div>
+
+   <div id="teamBoard">
+    <div class="empty">Сначала отметь присутствующих игроков и сформируй команды.</div>
+   </div>
+
    <div class="form-actions">
     <button id="addMatch">Сохранить матч</button>
    </div>
@@ -364,6 +384,7 @@ const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let data={players:[],matches:[]};
 let isAdmin=false;
 let busy=false;
+let generatedTeams=null;
 
 const $=id=>document.getElementById(id);
 const status=msg=>$("status").textContent=msg;
@@ -452,12 +473,10 @@ function renamePlayerReferences(oldName,newName){
 
   m.redPlayers=red.map(name=>samePlayer(name,oldName)?newName:name);
   m.bluePlayers=blue.map(name=>samePlayer(name,oldName)?newName:name);
-
   m.attendance=attendance.map(name=>
    samePlayer(name,oldName)?newName:name
   );
  });
-
 }
 
 function playerStats(playerName){
@@ -707,40 +726,175 @@ function renderMatches(){
  }).join("");
 }
 
+/* СПИСОК ПРИСУТСТВУЮЩИХ */
+
 function renderRosterOptions(){
- const redBox=$("redPlayerOptions");
- const blueBox=$("bluePlayerOptions");
  const attendanceBox=$("attendanceOptions");
 
  if(!data.players.length){
-  redBox.innerHTML=blueBox.innerHTML=attendanceBox.innerHTML=
-   '<span class="muted">Сначала добавьте игроков.</span>';
+  attendanceBox.innerHTML='<span class="muted">Сначала добавьте игроков.</span>';
+  updateAttendanceCount();
   return;
  }
 
- const makeTeamOptions=team=>data.players.map((p,i)=>`
-  <label class="player-option">
-   <input type="checkbox" class="roster-check" data-team="${team}" value="${i}">
-   <span>${esc(p.name)} ${p.gender?`(${p.gender})`:""} ${p.setter?"· Связующий":""}</span>
-  </label>
- `).join("");
-
- const makeAttendanceOptions=()=>data.players.map((p,i)=>`
+ attendanceBox.innerHTML=data.players.map((p,i)=>`
   <label class="attendance-option">
    <input type="checkbox" class="attendance-check" value="${i}">
    <span>${esc(p.name)} ${p.gender?`(${p.gender})`:""} ${p.setter?"· Связующий":""}</span>
   </label>
  `).join("");
 
- redBox.innerHTML=makeTeamOptions("red");
- blueBox.innerHTML=makeTeamOptions("blue");
- attendanceBox.innerHTML=makeAttendanceOptions();
  updateAttendanceCount();
 }
 
 function updateAttendanceCount(){
  const count=document.querySelectorAll(".attendance-check:checked").length;
  $("attendanceCount").textContent=`Выбрано: ${count} игроков`;
+}
+
+/* РАСЧЁТ ПОКАЗАТЕЛЕЙ КОМАНДЫ */
+
+function getTeamMetrics(indexes){
+ const players=indexes.map(i=>data.players[i]);
+ const count=players.length;
+
+ const sum=key=>players.reduce((total,p)=>total+Number(p[key]||0),0);
+ const average=count
+  ?players.reduce((total,p)=>total+Number(avg(p)),0)/count
+  :0;
+
+ return {
+  players,
+  count,
+  average,
+  attack:sum("attack"),
+  receive:sum("receive"),
+  serve:sum("serve"),
+  girls:players.filter(p=>p.gender==="Ж").length,
+  setters:players.filter(p=>p.setter===true).length
+ };
+}
+
+/* ОТОБРАЖЕНИЕ СПОРТИВНОГО ТАБЛО */
+
+function renderTeamBoard(){
+ const board=$("teamBoard");
+
+ if(!generatedTeams){
+  board.innerHTML='<div class="empty">Сначала отметь присутствующих игроков и нажми «Сформировать команды».</div>';
+  return;
+ }
+
+ const red=getTeamMetrics(generatedTeams.red);
+ const blue=getTeamMetrics(generatedTeams.blue);
+
+ function teamCard(team,color){
+  const isRed=color==="red";
+
+  return `
+   <div class="team-board-card ${color}">
+    <div class="team-board-head">
+     <div class="team-board-title">${isRed?"🔴 КРАСНЫЕ":"🔵 СИНИЕ"}</div>
+     <div class="team-board-count">${team.count} игроков</div>
+    </div>
+
+    <div class="team-board-roster">
+     ${team.players.map(p=>`
+      <div class="team-board-player">
+       ${avatarHTML(p)}
+       <div style="min-width:0">
+        <div class="team-board-player-name">
+         ${esc(p.name)} ${p.gender?`(${p.gender})`:""}
+         ${p.setter?'<span class="setter-badge">СВЯЗУЮЩИЙ</span>':""}
+        </div>
+        <div class="team-board-player-info">
+         Атака ${Number(p.attack)} · Приём ${Number(p.receive)} · Подача ${Number(p.serve)}
+        </div>
+       </div>
+       <div class="team-board-player-rating">${avg(p)}</div>
+      </div>
+     `).join("")}
+    </div>
+
+    <div class="team-metrics">
+     <div class="team-metric">
+      <strong>${team.average.toFixed(1)}</strong>
+      <span>СРЕДНИЙ РЕЙТИНГ</span>
+     </div>
+     <div class="team-metric">
+      <strong>${team.attack}</strong>
+      <span>НАПАДЕНИЕ</span>
+     </div>
+     <div class="team-metric">
+      <strong>${team.receive}</strong>
+      <span>ПРИЁМ</span>
+     </div>
+     <div class="team-metric">
+      <strong>${team.serve}</strong>
+      <span>ПОДАЧА</span>
+     </div>
+     <div class="team-metric">
+      <strong>${team.girls}</strong>
+      <span>ДЕВУШЕК</span>
+     </div>
+     <div class="team-metric">
+      <strong>${team.setters}</strong>
+      <span>СВЯЗУЮЩИХ</span>
+     </div>
+    </div>
+   </div>
+  `;
+ }
+
+ const averageDifference=Math.abs(red.average-blue.average);
+ const attackDifference=Math.abs(red.attack-blue.attack);
+ const receiveDifference=Math.abs(red.receive-blue.receive);
+ const serveDifference=Math.abs(red.serve-blue.serve);
+ const girlDifference=Math.abs(red.girls-blue.girls);
+ const setterDifference=Math.abs(red.setters-blue.setters);
+
+ let balanceText="Команды сформированы.";
+ if(averageDifference<=0.2)balanceText="Средний рейтинг команд практически одинаковый.";
+ else if(red.average>blue.average)balanceText="По среднему рейтингу немного сильнее красные.";
+ else balanceText="По среднему рейтингу немного сильнее синие.";
+
+ board.innerHTML=`
+  <div class="team-board">
+   ${teamCard(red,"red")}
+   ${teamCard(blue,"blue")}
+  </div>
+
+  <div class="team-balance">
+   <div class="team-balance-title">⚖️ СРАВНЕНИЕ КОМАНД</div>
+   <div class="team-balance-grid">
+    <div class="team-balance-item">
+     <strong>${averageDifference.toFixed(2)}</strong>
+     <span>РАЗНИЦА РЕЙТИНГА</span>
+    </div>
+    <div class="team-balance-item">
+     <strong>${girlDifference}</strong>
+     <span>РАЗНИЦА ПО ДЕВУШКАМ</span>
+    </div>
+    <div class="team-balance-item">
+     <strong>${setterDifference}</strong>
+     <span>РАЗНИЦА ПО СВЯЗУЮЩИМ</span>
+    </div>
+    <div class="team-balance-item">
+     <strong>${attackDifference}</strong>
+     <span>РАЗНИЦА НАПАДЕНИЯ</span>
+    </div>
+    <div class="team-balance-item">
+     <strong>${receiveDifference}</strong>
+     <span>РАЗНИЦА ПРИЁМА</span>
+    </div>
+    <div class="team-balance-item">
+     <strong>${serveDifference}</strong>
+     <span>РАЗНИЦА ПОДАЧИ</span>
+    </div>
+   </div>
+   <div class="team-balance-note">${balanceText} Распределение сохранится при записи матча в историю.</div>
+  </div>
+ `;
 }
 
 function renderAttendance(){
@@ -792,7 +946,7 @@ function renderAttendance(){
     </tbody>
    </table>
   </div>
-  <div class="form-hint">Посещаемость рассчитывается по сохранённым составам матчей. Для старых матчей учитываются игроки, записанные в составах красной и синей команд.</div>
+  <div class="form-hint">Посещаемость рассчитывается по сохранённым спискам присутствовавших. Для старых матчей учитываются игроки, записанные в составах красной и синей команд.</div>
  `;
 }
 
@@ -1016,7 +1170,6 @@ function render(){
  $("loginButton").classList.toggle("hidden",isAdmin);
  $("logoutButton").classList.toggle("hidden",!isAdmin);
  $("adminLabel").classList.toggle("hidden",!isAdmin);
-
  $("authText").textContent=isAdmin
   ?"Вы вошли как администратор. Изменения доступны только вам."
   :"Статистика открыта для просмотра всем участникам.";
@@ -1043,13 +1196,10 @@ async function load(){
  if(!Array.isArray(data.players))data.players=[];
  if(!Array.isArray(data.matches))data.matches=[];
 
- // Старые записи игроков автоматически получают значение setter=false.
- // Существующие значения не перезаписываются.
  data.players.forEach(p=>{
   if(typeof p.setter!=="boolean")p.setter=false;
  });
 
- // Добавляем известные составы матча 12 ноября только если они отсутствуют.
  let migrated=false;
  const oldMatch=data.matches.find(isNovember12Match);
 
@@ -1064,6 +1214,7 @@ async function load(){
   }
  }
 
+ generatedTeams=null;
  render();
  status("Данные успешно загружены.");
 
@@ -1112,23 +1263,11 @@ function getCheckedIndexes(selector){
   .map(x=>Number(x.value));
 }
 
-function setTeamSelection(redIndexes,blueIndexes){
- document.querySelectorAll(".roster-check").forEach(el=>{
-  const i=Number(el.value);
-  el.checked=el.dataset.team==="red"
-   ?redIndexes.includes(i)
-   :blueIndexes.includes(i);
- });
-}
-
 /*
  * ОЦЕНКА БАЛАНСА КОМАНД
  *
  * Разница по девушкам и связующим имеет высокий приоритет.
- * Поэтому алгоритм сначала старается распределить эти категории
- * максимально равномерно, а затем учитывает игровые рейтинги.
- *
- * Девушка, которая является связующим, учитывается в обеих категориях.
+ * Затем учитываются общий рейтинг и три игровых навыка.
  */
 
 function teamBalanceScore(redIndexes,blueIndexes){
@@ -1146,7 +1285,6 @@ function teamBalanceScore(redIndexes,blueIndexes){
  const girlDifference=Math.abs(countGirls(red)-countGirls(blue));
  const setterDifference=Math.abs(countSetters(red)-countSetters(blue));
 
- // Большой штраф делает равное распределение категорий приоритетным.
  const categoryPenalty=(girlDifference+setterDifference)*10000;
 
  const skillDifference=
@@ -1160,10 +1298,6 @@ function teamBalanceScore(redIndexes,blueIndexes){
 
 /*
  * ПОИСК ЛУЧШЕГО РАСПРЕДЕЛЕНИЯ
- *
- * Для обычного количества участников перебираются возможные варианты.
- * Для очень больших составов применяется быстрый жадный алгоритм
- * с последующей оптимизацией перестановками.
  */
 
 function findBalancedTeams(indexes){
@@ -1176,7 +1310,6 @@ function findBalancedTeams(indexes){
  let best=null;
  let bestScore=Infinity;
 
- // Точный перебор для составов до 20 человек.
  if(n<=20){
   function search(start,chosen){
    if(chosen.length===targetRed){
@@ -1205,11 +1338,8 @@ function findBalancedTeams(indexes){
   return best;
  }
 
- // Для больших составов сначала распределяем игроков с учётом
- // редких ролей, затем оптимизируем составы перестановками.
  const sorted=indexes.slice().sort((a,b)=>{
   const pa=data.players[a],pb=data.players[b];
-
   const priorityA=(pa.gender==="Ж"?2:0)+(pa.setter?2:0);
   const priorityB=(pb.gender==="Ж"?2:0)+(pb.setter?2:0);
 
@@ -1240,7 +1370,6 @@ function findBalancedTeams(indexes){
   else blue.push(i);
  });
 
- // Улучшаем результат обменом игроков между командами.
  let improved=true;
  let iterations=0;
 
@@ -1312,6 +1441,7 @@ $("submitLogin").onclick=async()=>{
 $("logoutButton").onclick=async()=>{
  await db.auth.signOut();
  isAdmin=false;
+ generatedTeams=null;
  render();
  status("Вы вышли из режима администратора.");
 };
@@ -1376,7 +1506,6 @@ $("playerGrid").addEventListener("change",async e=>{
   return;
  }
 
- // Редактирование профиля игрока.
  if(el.dataset.profileField){
   const i=Number(el.dataset.player);
   const field=el.dataset.profileField;
@@ -1423,12 +1552,12 @@ $("playerGrid").addEventListener("change",async e=>{
    data.players[i].setter=el.value==="true";
   }
 
+  generatedTeams=null;
   render();
   await save();
   return;
  }
 
- // Изменение спортивных оценок.
  if(!el.dataset.field)return;
 
  const i=Number(el.dataset.player);
@@ -1442,6 +1571,7 @@ $("playerGrid").addEventListener("change",async e=>{
 
  data.players[i][field]=Number(el.value);
 
+ generatedTeams=null;
  render();
  await save();
 });
@@ -1455,6 +1585,7 @@ $("playerGrid").addEventListener("click",async e=>{
 
  if(confirm("Удалить игрока "+data.players[i].name+"?")){
   data.players.splice(i,1);
+  generatedTeams=null;
   render();
   await save();
  }
@@ -1500,26 +1631,16 @@ $("addPlayer").onclick=async()=>{
  $("newGender").value="";
  $("newSetter").value="false";
 
+ generatedTeams=null;
  render();
  await save();
 };
 
-/* ПОСЕЩАЕМОСТЬ */
+/* ПОСЕЩАЕМОСТЬ И СБРОС СТАРОГО РАСПРЕДЕЛЕНИЯ */
 
-$("attendanceOptions").addEventListener("change",updateAttendanceCount);
-
-document.addEventListener("change",e=>{
- if(!e.target.classList.contains("roster-check"))return;
-
- const index=Number(e.target.value);
- const attendance=document.querySelector(
-  `.attendance-check[value="${index}"]`
- );
-
- if(e.target.checked&&attendance){
-  attendance.checked=true;
- }
-
+$("attendanceOptions").addEventListener("change",()=>{
+ generatedTeams=null;
+ renderTeamBoard();
  updateAttendanceCount();
 });
 
@@ -1537,37 +1658,20 @@ $("autoTeams").onclick=()=>{
 
  if(!teams)return;
 
- setTeamSelection(teams.red,teams.blue);
- updateAttendanceCount();
+ generatedTeams=teams;
+ renderTeamBoard();
 
- const redPlayers=teams.red.map(i=>data.players[i]);
- const bluePlayers=teams.blue.map(i=>data.players[i]);
-
- const redGirls=redPlayers.filter(p=>p.gender==="Ж").length;
- const blueGirls=bluePlayers.filter(p=>p.gender==="Ж").length;
-
- const redSetters=redPlayers.filter(p=>p.setter).length;
- const blueSetters=bluePlayers.filter(p=>p.setter).length;
-
- const redNames=redPlayers.map(p=>p.name);
- const blueNames=bluePlayers.map(p=>p.name);
-
- alert(
-  "Команды сформированы!\n\n"+
-  "🔴 Красные:\n"+redNames.join(", ")+
-  "\nДевушки: "+redGirls+" · Связующие: "+redSetters+
-  "\n\n🔵 Синие:\n"+blueNames.join(", ")+
-  "\nДевушки: "+blueGirls+" · Связующие: "+blueSetters
- );
+ status("Команды сформированы. Проверь табло перед сохранением матча.");
 };
 
-$("clearTeams").onclick=()=>{
- document.querySelectorAll(".roster-check")
-  .forEach(x=>x.checked=false);
+/* ОЧИСТКА ВЫБОРА */
 
+$("clearTeams").onclick=()=>{
  document.querySelectorAll(".attendance-check")
   .forEach(x=>x.checked=false);
 
+ generatedTeams=null;
+ renderTeamBoard();
  updateAttendanceCount();
 };
 
@@ -1592,31 +1696,43 @@ $("addMatch").onclick=async()=>{
   return;
  }
 
- const redIndexes=getCheckedIndexes('.roster-check[data-team="red"]');
- const blueIndexes=getCheckedIndexes('.roster-check[data-team="blue"]');
+ if(!generatedTeams){
+  alert("Сначала сформируй команды автоматически.");
+  return;
+ }
+
  const attendanceIndexes=getCheckedIndexes(".attendance-check");
 
- if(!redIndexes.length||!blueIndexes.length){
-  alert("Выберите составы обеих команд.");
+ if(attendanceIndexes.length<2){
+  alert("Отметь присутствующих игроков.");
   return;
  }
 
- const redPlayers=redIndexes.map(i=>data.players[i].name);
- const bluePlayers=blueIndexes.map(i=>data.players[i].name);
+ const assignedIndexes=[
+  ...generatedTeams.red,
+  ...generatedTeams.blue
+ ].sort((a,b)=>a-b);
+
+ const selectedIndexes=[...attendanceIndexes].sort((a,b)=>a-b);
+
+ if(
+  assignedIndexes.length!==selectedIndexes.length||
+  assignedIndexes.some((value,index)=>value!==selectedIndexes[index])
+ ){
+  alert("Список присутствующих изменился. Сформируй команды заново.");
+  generatedTeams=null;
+  renderTeamBoard();
+  return;
+ }
+
+ const redPlayers=generatedTeams.red.map(i=>data.players[i].name);
+ const bluePlayers=generatedTeams.blue.map(i=>data.players[i].name);
  const attendance=attendanceIndexes.map(i=>data.players[i].name);
-
- const assigned=new Set([...redIndexes,...blueIndexes]);
- const unassigned=attendanceIndexes.filter(i=>!assigned.has(i));
-
- if(unassigned.length){
-  alert("Распредели всех отмеченных присутствующих по красной или синей команде.");
-  return;
- }
 
  const redSet=new Set(redPlayers.map(normalizeName));
 
  if(bluePlayers.some(name=>redSet.has(normalizeName(name)))){
-  alert("Один игрок не может быть одновременно в двух командах.");
+  alert("Один игрок не может находиться сразу в двух командах.");
   return;
  }
 
@@ -1634,8 +1750,7 @@ $("addMatch").onclick=async()=>{
  $("blueScore").value="";
  $("matchDate").value="";
 
- document.querySelectorAll(".roster-check,.attendance-check")
-  .forEach(x=>x.checked=false);
+ generatedTeams=null;
 
  render();
  await save();
