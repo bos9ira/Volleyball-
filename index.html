@@ -58,6 +58,7 @@ main{max-width:1100px;margin:25px auto;padding:0 16px}
 .gender-m{background:#18395f;color:#72aaff;border:1px solid #315b8b}
 .gender-f{background:#512b48;color:#ff9bd0;border:1px solid #87466f}
 .gender-none{background:#263750;color:var(--muted);border:1px solid #354862}
+.setter-badge{display:inline-flex;align-items:center;padding:3px 6px;border-radius:6px;background:#244238;border:1px solid #39765d;color:#7ee0b4;font-size:10px;font-weight:700;margin-left:4px;vertical-align:middle}
 .rating{width:52px;height:52px;flex-shrink:0;border-radius:13px;background:#173d3a;border:1px solid #236b5b;display:grid;place-items:center;color:var(--green);font-size:19px;font-weight:800}
 .skill{margin-top:17px}
 .skill-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px}
@@ -70,6 +71,8 @@ main{max-width:1100px;margin:25px auto;padding:0 16px}
 .player-profile-edit{display:grid;grid-template-columns:1fr 85px;gap:7px;margin-top:13px}
 .player-profile-edit label{font-size:10px;color:var(--muted);min-width:0}
 .player-profile-edit input,.player-profile-edit select{width:100%;margin-top:5px;padding:9px 6px;font-size:12px}
+.player-profile-edit .setter-edit{grid-column:1/-1}
+.setter-edit select{max-width:100%}
 .avatar-edit{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
 .avatar-edit label{font-size:11px;color:var(--muted);display:block;margin-bottom:7px}
 .avatar-edit input{width:100%;font-size:11px;padding:7px}
@@ -254,6 +257,10 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
      <option value="М">М — мужчина</option>
      <option value="Ж">Ж — женщина</option>
     </select>
+    <select id="newSetter">
+     <option value="false">Связующий: нет</option>
+     <option value="true">Связующий: да</option>
+    </select>
     <input id="newAttack" type="number" min="0" max="10" value="5" placeholder="Нападение">
     <input id="newReceive" type="number" min="0" max="10" value="5" placeholder="Приём">
     <input id="newServe" type="number" min="0" max="10" value="5" placeholder="Подача">
@@ -290,7 +297,7 @@ footer{text-align:center;color:#657b98;padding:30px 10px;font-size:11px}
     <button id="clearTeams" class="secondary">Очистить составы</button>
    </div>
    <div class="form-hint">
-    Сначала отметь всех пришедших игроков. Автоматическое распределение постарается уравнять команды по общему рейтингу, нападению, приёму и подаче. После распределения составы можно изменить вручную.
+    Алгоритм сначала старается равномерно распределить девушек и связующих, затем выравнивает общий рейтинг, нападение, приём и подачу. После распределения составы можно изменить вручную.
    </div>
 
    <div class="roster-selects">
@@ -450,6 +457,7 @@ function renamePlayerReferences(oldName,newName){
    samePlayer(name,oldName)?newName:name
   );
  });
+
 }
 
 function playerStats(playerName){
@@ -552,7 +560,10 @@ function renderPlayers(){
      <div class="player-identity">
       ${avatarHTML(p)}
       <div>
-       <div class="player-name">${esc(p.name)} ${genderHTML(p.gender)}</div>
+       <div class="player-name">
+        ${esc(p.name)} ${genderHTML(p.gender)}
+        ${p.setter?'<span class="setter-badge">СВЯЗУЮЩИЙ</span>':""}
+       </div>
        <div class="player-rank">Место в рейтинге: #${index+1}</div>
       </div>
      </div>
@@ -612,6 +623,12 @@ function renderPlayers(){
         <option value="" ${!p.gender?"selected":""}>—</option>
         <option value="М" ${p.gender==="М"?"selected":""}>М</option>
         <option value="Ж" ${p.gender==="Ж"?"selected":""}>Ж</option>
+       </select>
+      </label>
+      <label class="setter-edit">Связующий
+       <select data-player="${i}" data-profile-field="setter">
+        <option value="false" ${!p.setter?"selected":""}>Нет</option>
+        <option value="true" ${p.setter?"selected":""}>Да</option>
        </select>
       </label>
      </div>
@@ -704,14 +721,14 @@ function renderRosterOptions(){
  const makeTeamOptions=team=>data.players.map((p,i)=>`
   <label class="player-option">
    <input type="checkbox" class="roster-check" data-team="${team}" value="${i}">
-   <span>${esc(p.name)} ${p.gender?`(${p.gender})`:""}</span>
+   <span>${esc(p.name)} ${p.gender?`(${p.gender})`:""} ${p.setter?"· Связующий":""}</span>
   </label>
  `).join("");
 
  const makeAttendanceOptions=()=>data.players.map((p,i)=>`
   <label class="attendance-option">
    <input type="checkbox" class="attendance-check" value="${i}">
-   <span>${esc(p.name)} ${p.gender?`(${p.gender})`:""}</span>
+   <span>${esc(p.name)} ${p.gender?`(${p.gender})`:""} ${p.setter?"· Связующий":""}</span>
   </label>
  `).join("");
 
@@ -1026,8 +1043,13 @@ async function load(){
  if(!Array.isArray(data.players))data.players=[];
  if(!Array.isArray(data.matches))data.matches=[];
 
+ // Старые записи игроков автоматически получают значение setter=false.
+ // Существующие значения не перезаписываются.
+ data.players.forEach(p=>{
+  if(typeof p.setter!=="boolean")p.setter=false;
+ });
+
  // Добавляем известные составы матча 12 ноября только если они отсутствуют.
- // Существующие составы больше не перезаписываются.
  let migrated=false;
  const oldMatch=data.matches.find(isNovember12Match);
 
@@ -1099,6 +1121,16 @@ function setTeamSelection(redIndexes,blueIndexes){
  });
 }
 
+/*
+ * ОЦЕНКА БАЛАНСА КОМАНД
+ *
+ * Разница по девушкам и связующим имеет высокий приоритет.
+ * Поэтому алгоритм сначала старается распределить эти категории
+ * максимально равномерно, а затем учитывает игровые рейтинги.
+ *
+ * Девушка, которая является связующим, учитывается в обеих категориях.
+ */
+
 function teamBalanceScore(redIndexes,blueIndexes){
  const red=redIndexes.map(i=>data.players[i]);
  const blue=blueIndexes.map(i=>data.players[i]);
@@ -1108,23 +1140,46 @@ function teamBalanceScore(redIndexes,blueIndexes){
  const overall=arr=>arr.reduce((s,p)=>s+
   (Number(p.attack||0)+Number(p.receive||0)+Number(p.serve||0))/3,0);
 
- return Math.abs(overall(red)-overall(blue))*10+
+ const countGirls=arr=>arr.filter(p=>p.gender==="Ж").length;
+ const countSetters=arr=>arr.filter(p=>p.setter===true).length;
+
+ const girlDifference=Math.abs(countGirls(red)-countGirls(blue));
+ const setterDifference=Math.abs(countSetters(red)-countSetters(blue));
+
+ // Большой штраф делает равное распределение категорий приоритетным.
+ const categoryPenalty=(girlDifference+setterDifference)*10000;
+
+ const skillDifference=
+  Math.abs(overall(red)-overall(blue))*10+
   Math.abs(sum(red,"attack")-sum(blue,"attack"))+
   Math.abs(sum(red,"receive")-sum(blue,"receive"))+
   Math.abs(sum(red,"serve")-sum(blue,"serve"));
+
+ return categoryPenalty+skillDifference;
 }
+
+/*
+ * ПОИСК ЛУЧШЕГО РАСПРЕДЕЛЕНИЯ
+ *
+ * Для обычного количества участников перебираются возможные варианты.
+ * Для очень больших составов применяется быстрый жадный алгоритм
+ * с последующей оптимизацией перестановками.
+ */
 
 function findBalancedTeams(indexes){
  const n=indexes.length;
  if(n<2)return null;
 
- const target=Math.floor(n/2);
+ const targetRed=Math.floor(n/2);
+ const targetBlue=n-targetRed;
+
  let best=null;
  let bestScore=Infinity;
 
- if(n<=18){
+ // Точный перебор для составов до 20 человек.
+ if(n<=20){
   function search(start,chosen){
-   if(chosen.length===target){
+   if(chosen.length===targetRed){
     const chosenSet=new Set(chosen);
     const red=[...chosen];
     const blue=indexes.filter(i=>!chosenSet.has(i));
@@ -1137,7 +1192,7 @@ function findBalancedTeams(indexes){
     return;
    }
 
-   const needed=target-chosen.length;
+   const needed=targetRed-chosen.length;
 
    for(let i=start;i<=n-needed;i++){
     chosen.push(indexes[i]);
@@ -1150,18 +1205,77 @@ function findBalancedTeams(indexes){
   return best;
  }
 
- const sorted=indexes.slice().sort((a,b)=>
-  Number(avg(data.players[b]))-Number(avg(data.players[a]))
- );
+ // Для больших составов сначала распределяем игроков с учётом
+ // редких ролей, затем оптимизируем составы перестановками.
+ const sorted=indexes.slice().sort((a,b)=>{
+  const pa=data.players[a],pb=data.players[b];
 
- const red=[],blue=[];
+  const priorityA=(pa.gender==="Ж"?2:0)+(pa.setter?2:0);
+  const priorityB=(pb.gender==="Ж"?2:0)+(pb.setter?2:0);
 
- sorted.forEach((i,index)=>{
-  if(red.length>blue.length)blue.push(i);
-  else if(blue.length>red.length)red.push(i);
-  else if(teamBalanceScore([...red,i],blue)<=teamBalanceScore(red,[...blue,i]))red.push(i);
+  if(priorityA!==priorityB)return priorityB-priorityA;
+  return Number(avg(pb))-Number(avg(pa));
+ });
+
+ let red=[],blue=[];
+
+ sorted.forEach(i=>{
+  const canRed=red.length<targetRed;
+  const canBlue=blue.length<targetBlue;
+
+  if(!canRed){
+   blue.push(i);
+   return;
+  }
+
+  if(!canBlue){
+   red.push(i);
+   return;
+  }
+
+  const redScore=teamBalanceScore([...red,i],blue);
+  const blueScore=teamBalanceScore(red,[...blue,i]);
+
+  if(redScore<=blueScore)red.push(i);
   else blue.push(i);
  });
+
+ // Улучшаем результат обменом игроков между командами.
+ let improved=true;
+ let iterations=0;
+
+ while(improved&&iterations<100){
+  improved=false;
+  iterations++;
+
+  let currentScore=teamBalanceScore(red,blue);
+  let bestSwap=null;
+  let swapScore=currentScore;
+
+  for(let r=0;r<red.length;r++){
+   for(let b=0;b<blue.length;b++){
+    const nextRed=[...red];
+    const nextBlue=[...blue];
+
+    const temp=nextRed[r];
+    nextRed[r]=nextBlue[b];
+    nextBlue[b]=temp;
+
+    const score=teamBalanceScore(nextRed,nextBlue);
+
+    if(score<swapScore){
+     swapScore=score;
+     bestSwap={red:nextRed,blue:nextBlue};
+    }
+   }
+  }
+
+  if(bestSwap){
+   red=bestSwap.red;
+   blue=bestSwap.blue;
+   improved=true;
+  }
+ }
 
  return {red,blue};
 }
@@ -1206,7 +1320,7 @@ $("logoutButton").onclick=async()=>{
 
 $("searchPlayers").addEventListener("input",renderPlayers);
 
-/* ИЗМЕНЕНИЕ ИМЕНИ, ПОЛА, ОЦЕНОК И ФОТОГРАФИЙ */
+/* ИЗМЕНЕНИЕ ИМЕНИ, ПОЛА, РОЛИ, ОЦЕНОК И ФОТОГРАФИЙ */
 
 $("playerGrid").addEventListener("change",async e=>{
  const el=e.target;
@@ -1262,7 +1376,7 @@ $("playerGrid").addEventListener("change",async e=>{
   return;
  }
 
- // Редактирование имени и пола.
+ // Редактирование профиля игрока.
  if(el.dataset.profileField){
   const i=Number(el.dataset.player);
   const field=el.dataset.profileField;
@@ -1299,6 +1413,14 @@ $("playerGrid").addEventListener("change",async e=>{
     return;
    }
    data.players[i].gender=el.value;
+  }
+
+  if(field==="setter"){
+   if(!["true","false"].includes(el.value)){
+    renderPlayers();
+    return;
+   }
+   data.players[i].setter=el.value==="true";
   }
 
   render();
@@ -1345,6 +1467,7 @@ $("addPlayer").onclick=async()=>{
 
  const name=$("newName").value.trim();
  const gender=$("newGender").value;
+ const setter=$("newSetter").value==="true";
 
  if(!name){
   alert("Введите имя игрока.");
@@ -1367,6 +1490,7 @@ $("addPlayer").onclick=async()=>{
  data.players.push({
   name,
   gender,
+  setter,
   attack:Number(values[0]),
   receive:Number(values[1]),
   serve:Number(values[2])
@@ -1374,6 +1498,7 @@ $("addPlayer").onclick=async()=>{
 
  $("newName").value="";
  $("newGender").value="";
+ $("newSetter").value="false";
 
  render();
  await save();
@@ -1415,13 +1540,24 @@ $("autoTeams").onclick=()=>{
  setTeamSelection(teams.red,teams.blue);
  updateAttendanceCount();
 
- const redNames=teams.red.map(i=>data.players[i].name);
- const blueNames=teams.blue.map(i=>data.players[i].name);
+ const redPlayers=teams.red.map(i=>data.players[i]);
+ const bluePlayers=teams.blue.map(i=>data.players[i]);
+
+ const redGirls=redPlayers.filter(p=>p.gender==="Ж").length;
+ const blueGirls=bluePlayers.filter(p=>p.gender==="Ж").length;
+
+ const redSetters=redPlayers.filter(p=>p.setter).length;
+ const blueSetters=bluePlayers.filter(p=>p.setter).length;
+
+ const redNames=redPlayers.map(p=>p.name);
+ const blueNames=bluePlayers.map(p=>p.name);
 
  alert(
   "Команды сформированы!\n\n"+
   "🔴 Красные:\n"+redNames.join(", ")+
-  "\n\n🔵 Синие:\n"+blueNames.join(", ")
+  "\nДевушки: "+redGirls+" · Связующие: "+redSetters+
+  "\n\n🔵 Синие:\n"+blueNames.join(", ")+
+  "\nДевушки: "+blueGirls+" · Связующие: "+blueSetters
  );
 };
 
