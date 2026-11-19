@@ -435,9 +435,50 @@ body.share-board-open{overflow:hidden}
 
    <div class="form-actions">
     <button id="openShareBoard" class="secondary hidden">📋 Открыть табло для скриншота</button>
-    <button id="addMatch">Сохранить матч</button>
+     <button id="addMatch">Сохранить матч</button>
+    </div>
+
+    <div class="form-panel" style="margin-top:22px">
+     <h4>📝 Ручная фиксация сыгранного матча</h4>
+     <div class="muted" style="margin-bottom:10px">Для сегодняшних или прошлых игр: укажи фактические составы и победителя. Автоматическое формирование команд выше остаётся без изменений.</div>
+     <button type="button" id="toggleManualMatch" class="secondary">Открыть ручную фиксацию</button>
+     <div id="manualMatchPanel" class="hidden" style="margin-top:14px">
+      <div class="form-row">
+       <label style="flex:1;min-width:150px;font-size:12px;color:var(--muted)">Дата матча
+        <input id="manualMatchDate" type="date" style="width:100%;margin-top:5px">
+       </label>
+       <label style="flex:1;min-width:130px;font-size:12px;color:var(--muted)">Победитель
+        <select id="manualWinner" style="width:100%;margin-top:5px">
+         <option value="">Выбери победителя</option>
+         <option value="Красные">🔴 Красные</option>
+         <option value="Синие">🔵 Синие</option>
+         <option value="Ничья">Ничья</option>
+        </select>
+       </label>
+      </div>
+      <div class="muted" style="margin:12px 0 7px">Счёт партий необязателен. Если хочешь, укажи его ниже.</div>
+      <div class="form-row">
+       <input id="manualRedScore" type="number" min="0" placeholder="Партии красных (необязательно)">
+       <input id="manualBlueScore" type="number" min="0" placeholder="Партии синих (необязательно)">
+      </div>
+      <div class="team-board" style="margin-top:14px">
+       <div class="team-board-card red">
+        <div class="team-board-title">🔴 СОСТАВ КРАСНЫХ</div>
+        <div id="manualRedPlayers" class="attendance-grid" style="grid-template-columns:1fr;margin-top:10px"></div>
+       </div>
+       <div class="team-board-card blue">
+        <div class="team-board-title">🔵 СОСТАВ СИНИХ</div>
+        <div id="manualBluePlayers" class="attendance-grid" style="grid-template-columns:1fr;margin-top:10px"></div>
+       </div>
+      </div>
+      <div class="form-actions">
+       <button type="button" id="saveManualMatch">Сохранить сыгранный матч</button>
+       <button type="button" id="cancelManualMatch" class="secondary">Отмена</button>
+      </div>
+      <div class="form-hint">Каждого игрока можно выбрать только в одной команде. Посещаемость будет рассчитана автоматически по двум составам.</div>
+     </div>
+    </div>
    </div>
-  </div>
  </section>
 
  <section class="section" id="attendance">
@@ -744,7 +785,7 @@ function renderPlayers(){
      ${stats.history.length
       ?stats.history.slice().reverse().map(h=>`
        <div class="history-item">
-        ${esc(h.date)} · ${esc(h.red)}:${esc(h.blue)} —
+        ${esc(h.date)} · ${h.red!==null&&h.red!==undefined&&h.blue!==null&&h.blue!==undefined?`${esc(h.red)}:${esc(h.blue)}`:"без счёта"} —
         <strong class="${
          h.result==="Победа"?"history-win":
          h.result==="Поражение"?"history-loss":"history-unknown"
@@ -820,8 +861,9 @@ function renderMatches(){
     <div class="scoreline">
      <span class="team">🔴 КРАСНЫЕ</span>
      <span class="score">
-      <span class="${redWin?"winner":""}">${esc(m.red)}</span>:
-      <span class="${blueWin?"winner":""}">${esc(m.blue)}</span>
+      ${m.red!==null&&m.red!==undefined&&m.blue!==null&&m.blue!==undefined
+       ?`<span class="${redWin?"winner":""}">${esc(m.red)}</span>:<span class="${blueWin?"winner":""}">${esc(m.blue)}</span>`
+       :'<span style="font-size:14px;letter-spacing:0;color:var(--muted)">Без счёта</span>'}
      </span>
      <span class="team">🔵 СИНИЕ</span>
     </div>
@@ -870,6 +912,15 @@ function renderRosterOptions(){
  `).join("");
 
  updateAttendanceCount();
+}
+
+function renderManualPlayerOptions(){
+ const redBox=$("manualRedPlayers"),blueBox=$("manualBluePlayers");
+ if(!redBox||!blueBox)return;
+ const options=data.players.map((p,i)=>`<label class="attendance-option"><input type="checkbox" class="manual-red-check" value="${i}"><span>${esc(p.name)}</span></label>`).join("");
+ const blueOptions=data.players.map((p,i)=>`<label class="attendance-option"><input type="checkbox" class="manual-blue-check" value="${i}"><span>${esc(p.name)}</span></label>`).join("");
+ redBox.innerHTML=options||'<span class="muted">Нет игроков.</span>';
+ blueBox.innerHTML=blueOptions||'<span class="muted">Нет игроков.</span>';
 }
 
 function updateAttendanceCount(){
@@ -1391,6 +1442,7 @@ function render(){
  renderPlayers();
  renderMatches();
  renderRosterOptions();
+ renderManualPlayerOptions();
  renderAttendance();
  renderRivalries();
 
@@ -2001,6 +2053,88 @@ $("addMatch").onclick=async()=>{
  generatedTeams=null;
  closeShareBoard();
 
+ render();
+ await save();
+};
+
+/* РУЧНАЯ ФИКСАЦИЯ ФАКТИЧЕСКИ СЫГРАННОГО МАТЧА */
+
+$("toggleManualMatch").onclick=()=>{
+ const panel=$("manualMatchPanel");
+ panel.classList.toggle("hidden");
+ $("toggleManualMatch").textContent=panel.classList.contains("hidden")
+  ?"Открыть ручную фиксацию":"Свернуть ручную фиксацию";
+};
+
+function resetManualMatchForm(){
+ $("manualMatchDate").value="";
+ $("manualWinner").value="";
+ $("manualRedScore").value="";
+ $("manualBlueScore").value="";
+ document.querySelectorAll(".manual-red-check,.manual-blue-check").forEach(x=>x.checked=false);
+}
+
+$("cancelManualMatch").onclick=()=>{
+ resetManualMatchForm();
+ $("manualMatchPanel").classList.add("hidden");
+ $("toggleManualMatch").textContent="Открыть ручную фиксацию";
+};
+
+$("manualRedPlayers").addEventListener("change",e=>{
+ if(!e.target.classList.contains("manual-red-check"))return;
+ const counterpart=document.querySelector(`.manual-blue-check[value="${e.target.value}"]`);
+ if(e.target.checked&&counterpart)counterpart.checked=false;
+});
+
+$("manualBluePlayers").addEventListener("change",e=>{
+ if(!e.target.classList.contains("manual-blue-check"))return;
+ const counterpart=document.querySelector(`.manual-red-check[value="${e.target.value}"]`);
+ if(e.target.checked&&counterpart)counterpart.checked=false;
+});
+
+$("saveManualMatch").onclick=async()=>{
+ if(!isAdmin)return;
+ const date=$("manualMatchDate").value;
+ const winner=$("manualWinner").value;
+ const redIndexes=getCheckedIndexes(".manual-red-check");
+ const blueIndexes=getCheckedIndexes(".manual-blue-check");
+ const redScoreText=$("manualRedScore").value.trim();
+ const blueScoreText=$("manualBlueScore").value.trim();
+
+ if(!date){alert("Укажи дату матча.");return;}
+ if(!["Красные","Синие","Ничья"].includes(winner)){
+  alert("Выбери победившую команду.");return;
+ }
+ if(!redIndexes.length||!blueIndexes.length){
+  alert("Укажи хотя бы одного игрока в каждой команде.");return;
+ }
+ if(redIndexes.some(i=>blueIndexes.includes(i))){
+  alert("Один игрок не может находиться в двух командах.");return;
+ }
+ let red=null,blue=null;
+ if((redScoreText==="")!==(blueScoreText==="")){
+  alert("Укажи оба значения счёта или оставь оба поля пустыми.");return;
+ }
+ if(redScoreText!==""&&blueScoreText!==""){
+  red=Number(redScoreText);blue=Number(blueScoreText);
+  if(!Number.isInteger(red)||!Number.isInteger(blue)||red<0||blue<0){
+   alert("Счёт должен быть целыми неотрицательными числами.");return;
+  }
+  if((winner==="Красные"&&red<=blue)||(winner==="Синие"&&blue<=red)||(winner==="Ничья"&&red!==blue)){
+   alert("Выбранный победитель не совпадает с указанным счётом.");return;
+  }
+ }
+ const redPlayers=redIndexes.map(i=>data.players[i].name);
+ const bluePlayers=blueIndexes.map(i=>data.players[i].name);
+ data.matches.push({
+  date,red,blue,winner,
+  redPlayers,bluePlayers,
+  attendance:[...redPlayers,...bluePlayers],
+  manual:true
+ });
+ resetManualMatchForm();
+ $("manualMatchPanel").classList.add("hidden");
+ $("toggleManualMatch").textContent="Открыть ручную фиксацию";
  render();
  await save();
 };
